@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://danymumbere.github.io/safegather-alerts/sitemap.xml
