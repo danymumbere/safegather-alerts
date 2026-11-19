@@ -1,168 +1,106 @@
 // js/app.js
-import { incidentGeoJSON } from './data.js';
-import { initIndexedDB, syncPendingReports, getIncidents } from './offline.js';
-import { initMiniMap, initFullMap, refreshMap } from './map.js';
-import { showReportForm, submitReport } from './report.js';
-import { showPendingReports, deletePendingReport } from './pending.js';
-import { shareIncident } from './share.js';
-import { showSettings, toggleNotifications, toggleHighContrast } from './settings.js';
-import { showAboutPage } from './about.js';
-import { showToast, showOfflineBanner, hideOfflineBanner } from './ui.js';
+// Orchestrateur principal de l'application SafeGather Alerts.
 
-// Sélecteurs HTML valides (basés sur les IDs du contrat)
-const HOME_DASHBOARD_SELECTOR = '#home';
-const INCIDENT_REPORT_FORM_SELECTOR = '#report';
-const REAL_TIME_MAP_VIEW_SELECTOR = '#map';
-const PENDING_REPORTS_QUEUE_SELECTOR = '#pending';
-const SETTINGS_AND_PRIVACY_SELECTOR = '#settings';
-const ABOUT_AND_HELP_SELECTOR = '#about';
-const EMERGENCY_QUICK_ALERT_SELECTOR = '#emergency-quick-alert';
+import { initIndexedDB } from "./offline.js";
+import { initMiniMap, initFullMap } from "./map.js";
+import { initReportForm } from "./report.js";
+import { initPendingReports } from "./pending.js";
+import { initSettings } from "./settings.js";
+import { showAboutPage } from "./about.js";
+import { showToast } from "./ui.js";
 
-const MAIN_CONTENT_SELECTOR = '#main-content';
-const NAV_HOME_SELECTOR = '#btn-home';
-const NAV_REPORT_SELECTOR = '#btn-report';
-const NAV_MAP_SELECTOR = '#btn-map';
-const NAV_PENDING_SELECTOR = '#btn-pending';
-const NAV_SETTINGS_SELECTOR = '#btn-settings';
-const NAV_ABOUT_SELECTOR = '#btn-about';
+// État global de navigation
+const sections = {
+  home: document.getElementById("home"),
+  report: document.getElementById("report"),
+  map: document.getElementById("full-map"),
+  pending: document.getElementById("pending"),
+  settings: document.getElementById("settings"),
+  about: document.getElementById("about"),
+};
 
-let currentSection = 'home';
+/**
+ * Masque toutes les sections et affiche celle demandée.
+ * @param {string} sectionId - L'ID de la section à afficher.
+ */
+function navigateTo(sectionId) {
+  Object.keys(sections).forEach((key) => {
+    if (sections[key]) {
+      sections[key].style.display = key === sectionId ? "block" : "none";
+    }
+  });
 
-// Initialisation de l'application
-document.addEventListener('DOMContentLoaded', async () => {
+  // Logique spécifique post-navigation
+  if (sectionId === "map") {
+    initFullMap();
+  } else if (sectionId === "pending") {
+    initPendingReports();
+  } else if (sectionId === "about") {
+    showAboutPage();
+  }
+}
+
+/**
+ * Initialisation de l'application
+ */
+async function initApp() {
   try {
+    // Initialisation de la base de données locale
     await initIndexedDB();
-    initServiceWorker();
-    initNavigation();
-    initEmergencyAlert();
-    initAccessibilityFeatures();
-    showSection('home');
+
+    // Initialisation des composants UI
     initMiniMap();
-    refreshMap();
-    syncPendingReports();
-    checkConnectivity();
+    initReportForm();
+    initSettings();
+
+    // Configuration des écouteurs de navigation
+    document.getElementById("btn-home").addEventListener("click", () => navigateTo("home"));
+    document.getElementById("btn-report").addEventListener("click", () => navigateTo("report"));
+    document.getElementById("btn-map").addEventListener("click", () => navigateTo("map"));
+    document.getElementById("btn-pending").addEventListener("click", () => navigateTo("pending"));
+    document.getElementById("btn-settings").addEventListener("click", () => navigateTo("settings"));
+    document.getElementById("btn-about").addEventListener("click", () => navigateTo("about"));
+
+    // Bouton d'urgence
+    document.getElementById("emergency-quick-alert").addEventListener("click", () => {
+      const message = encodeURIComponent("ALERTE : Menace immédiate signalée via SafeGather Alerts. Soyez vigilants.");
+      window.location.href = `whatsapp://send?text=${message}`;
+      showToast("Alerte d’urgence envoyée à votre groupe communautaire.");
+    });
+
+    // Gestion de la connectivité
+    window.addEventListener("online", () => {
+      document.getElementById("offline-notice").style.display = "none";
+      showToast("Connexion rétablie.");
+    });
+
+    window.addEventListener("offline", () => {
+      document.getElementById("offline-notice").style.display = "block";
+      showToast("Mode hors ligne activé.");
+    });
+
+    // Vérification initiale de l'état réseau
+    if (!navigator.onLine) {
+      document.getElementById("offline-notice").style.display = "block";
+    }
+
+    // Affichage initial
+    navigateTo("home");
+
   } catch (error) {
-    showToast(`Erreur lors de l'initialisation : ${error.message}`);
-    console.error('Erreur d’initialisation:', error);
-  }
-});
-
-// Gestionnaire de navigation
-function initNavigation() {
-  document.querySelector(NAV_HOME_SELECTOR).addEventListener('click', () => showSection('home'));
-  document.querySelector(NAV_REPORT_SELECTOR).addEventListener('click', () => showSection('report'));
-  document.querySelector(NAV_MAP_SELECTOR).addEventListener('click', () => showSection('map'));
-  document.querySelector(NAV_PENDING_SELECTOR).addEventListener('click', () => showSection('pending'));
-  document.querySelector(NAV_SETTINGS_SELECTOR).addEventListener('click', () => showSection('settings'));
-  document.querySelector(NAV_ABOUT_SELECTOR).addEventListener('click', () => showSection('about'));
-}
-
-// Affichage des sections
-function showSection(section) {
-  const mainContent = document.querySelector(MAIN_CONTENT_SELECTOR);
-  mainContent.innerHTML = '';
-  currentSection = section;
-
-  switch (section) {
-    case 'home':
-      mainContent.innerHTML = `
-        <div id="home">
-          <div class="card">
-            <h2>Tableau de bord</h2>
-            <p id="incident-count">Incidents signalés : ${incidentGeoJSON.features.length}</p>
-            <div id="mini-map" class="mini-map"></div>
-            <button id="btn-report" class="btn-primary">Signaler un incident</button>
-            <button id="btn-map" class="btn-secondary">Voir la carte complète</button>
-          </div>
-        </div>
-      `;
-      initMiniMap();
-      attachHomeButtons();
-      break;
-
-    case 'report':
-      mainContent.innerHTML = `<div id="report"><div id="incident-form"></div></div>`;
-      showReportForm();
-      break;
-
-    case 'map':
-      mainContent.innerHTML = `<div id="map"><div id="full-map" class="full-map"></div></div>`;
-      initFullMap();
-      refreshMap();
-      break;
-
-    case 'pending':
-      mainContent.innerHTML = `<div id="pending"><div id="incident-table"></div></div>`;
-      showPendingReports();
-      break;
-
-    case 'settings':
-      mainContent.innerHTML = `<div id="settings"></div>`;
-      showSettings();
-      break;
-
-    case 'about':
-      mainContent.innerHTML = `<div id="about"></div>`;
-      showAboutPage();
-      break;
+    console.error("Erreur lors de l’initialisation de l’application :", error);
+    showToast("Erreur critique au démarrage de l’application.");
   }
 }
 
-// Attachement des boutons du dashboard
-function attachHomeButtons() {
-  document.querySelector('#btn-report').addEventListener('click', () => showSection('report'));
-  document.querySelector('#btn-map').addEventListener('click', () => showSection('map'));
-}
+// Lancement de l'application au chargement du DOM
+document.addEventListener("DOMContentLoaded", initApp);
 
-// Alerte d'urgence
-function initEmergencyAlert() {
-  const emergencyBtn = document.querySelector(EMERGENCY_QUICK_ALERT_SELECTOR);
-  emergencyBtn.addEventListener('click', () => {
-    const message = encodeURIComponent("🚨 ALERTE URGENCE 🚨 Menace immédiate détectée. Localisation : [vos coordonnées ici]. Partagez ce message immédiatement.");
-    window.open(`https://wa.me/?text=${message}`, '_blank');
+// Enregistrement du Service Worker pour le support hors ligne
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch((err) => {
+      console.warn("Service Worker non enregistré :", err);
+    });
   });
 }
-
-// Accessibilité
-function initAccessibilityFeatures() {
-  const contrastToggle = document.querySelector('#toggle-contrast'); // Correction de l'ID
-  if (contrastToggle) {
-    contrastToggle.addEventListener('change', toggleHighContrast);
-  }
-
-  const notificationToggle = document.querySelector('#toggle-notifications');
-  if (notificationToggle) {
-    notificationToggle.addEventListener('change', toggleNotifications);
-  }
-}
-
-// Service Worker
-function initServiceWorker() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js')
-      .then(() => console.log('Service Worker enregistré'))
-      .catch(err => console.error('Échec enregistrement SW:', err));
-  }
-}
-
-// Vérification de la connectivité
-function checkConnectivity() {
-  if (!navigator.onLine) {
-    showOfflineBanner();
-  }
-
-  window.addEventListener('online', () => {
-    hideOfflineBanner();
-    syncPendingReports();
-  });
-
-  window.addEventListener('offline', () => {
-    showOfflineBanner();
-  });
-}
-
-// Gestion globale des erreurs
-window.addEventListener('error', (e) => {
-  showToast(`Erreur technique : ${e.message}`);
-  console.error('Erreur capturée:', e);
-});
