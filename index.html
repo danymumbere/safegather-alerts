@@ -1,200 +1,107 @@
 <!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SafeGather Alerts – Real‑time Religious Gathering Safety</title><meta name="description" content="Mobile‑first, offline‑first app to instantly report and track safety incidents at religious gatherings. Share alerts via WhatsApp/Email and keep your community protected, even without internet."><meta name="keywords" content="religious safety, community alerts, offline, privacy, WhatsApp, map, emergency reporting"><link rel="canonical" href="https://danymumbere.github.io/safegather-alerts/"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0a7d6c"><meta property="og:type" content="website"><meta property="og:site_name" content="The Lamp's Mark"><meta property="og:title" content="SafeGather Alerts – Real‑time Religious Gathering Safety"><meta property="og:description" content="Mobile‑first, offline‑first app to instantly report and track safety incidents at religious gatherings. Share alerts via WhatsApp/Email and keep your community protected, even without internet."><meta property="og:url" content="https://danymumbere.github.io/safegather-alerts/"><meta property="og:image" content="https://danymumbere.github.io/safegather-alerts/og.svg"><meta property="og:image:alt" content="SafeGather Alerts – Real‑time Religious Gathering Safety"><meta property="og:locale" content="fr_FR"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="SafeGather Alerts – Real‑time Religious Gathering Safety"><meta name="twitter:description" content="Mobile‑first, offline‑first app to instantly report and track safety incidents at religious gatherings. Share alerts via WhatsApp/Email and keep your community protected, even without internet."><meta name="twitter:image" content="https://danymumbere.github.io/safegather-alerts/og.svg"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"SafeGather Alerts – Real‑time Religious Gathering Safety","description":"Mobile‑first, offline‑first app to instantly report and track safety incidents at religious gatherings. Share alerts via WhatsApp/Email and keep your community protected, even without internet.","url":"https://danymumbere.github.io/safegather-alerts/","applicationCategory":"LifestyleApplication","inLanguage":"fr","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"creator":{"@type":"Organization","name":"The Lamp's Mark","url":"https://thelampsmark.pages.dev/"}}</script><link rel="stylesheet" href="style.css"></head><body><main>
-  <!-- Bannière d’état hors ligne -->
-  <section id="offline-banner" data-feature="offline-support" class="banner-offline" aria-live="assertive" hidden>
-    <p>Vous êtes actuellement hors ligne. Vos signalements seront enregistrés localement et synchronisés dès que la connexion sera rétablie.</p>
-  </section>
+    <nav aria-label="Navigation principale">
+        <button id="btn-home" data-feature="home-dashboard" aria-controls="home">Accueil</button>
+        <button id="btn-report" data-feature="incident-report-form" aria-controls="report">Signaler</button>
+        <button id="btn-map" data-feature="real-time-map-view" aria-controls="map">Carte</button>
+        <button id="btn-pending" data-feature="pending-reports-queue" aria-controls="pending">En attente</button>
+        <button id="btn-settings" data-feature="settings-and-privacy" aria-controls="settings">Paramètres</button>
+        <button id="btn-about" data-feature="about-and-help" aria-controls="about">À propos</button>
+    </nav>
 
-  <!-- Tableau de bord – page d’accueil -->
-  <section id="home" data-feature="home-dashboard" aria-labelledby="home-title">
-    <h1 id="home-title">Tableau de bord</h1>
+    <section id="home" data-feature="home-dashboard">
+        <h1>SafeGather Alerts</h1>
+        <div id="incident-count" aria-live="polite">0 incidents signalés dans votre zone</div>
+        <div id="mini-map" aria-label="Aperçu de la carte des incidents récents"></div>
+        <button id="emergency-quick-alert" data-feature="emergency-quick-alert" aria-label="Envoyer une alerte d’urgence immédiate">Alerte d’urgence</button>
+        <button onclick="showSection('report')">Signaler un incident</button>
+        <button onclick="showSection('map')">Voir la carte complète</button>
+    </section>
 
-    <div id="incident-count-card" class="card" role="region" aria-label="Nombre total d’incidents">
-      <p class="stat-number" id="total-incidents">0</p>
-      <p class="stat-label">incidents signalés</p>
+    <section id="report" data-feature="incident-report-form" hidden>
+        <h2>Signaler un incident</h2>
+        <form id="incident-form">
+            <label for="location">Lieu de l’incident</label>
+            <input type="text" id="location" required aria-required="true" placeholder="Adresse ou coordonnées">
+            
+            <label for="incident-type">Type d’incident</label>
+            <select id="incident-type" required aria-required="true">
+                <option value="">Sélectionnez un type</option>
+                <option value="harassment">Harcèlement</option>
+                <option value="threat">Menace</option>
+                <option value="restriction">Restriction de mouvement</option>
+                <option value="other">Autre</option>
+            </select>
+            
+            <label for="description">Description détaillée</label>
+            <textarea id="description" placeholder="Décrivez brièvement ce qui s’est passé..."></textarea>
+            
+            <label for="photo">Photo (optionnel)</label>
+            <input type="file" id="photo" accept="image/*">
+            
+            <button type="submit">Soumettre le signalement</button>
+        </form>
+        <div id="report-progress" role="status" aria-live="polite"></div>
+    </section>
+
+    <section id="map" data-feature="real-time-map-view" hidden>
+        <h2>Carte des incidents</h2>
+        <div id="full-map" aria-label="Carte interactive des incidents signalés en temps réel"></div>
+        <div id="incident-details" hidden>
+            <p id="incident-time"></p>
+            <p id="incident-type"></p>
+            <button id="share-incident" data-feature="share-incident" aria-label="Partager cet incident via WhatsApp ou Email">Partager cet incident</button>
+            <button id="delete-incident" aria-label="Supprimer cet incident de la vue">Supprimer</button>
+            <input type="hidden" id="incident-id">
+        </div>
+    </section>
+
+    <section id="pending" data-feature="pending-reports-queue" hidden>
+        <h2>Signalements en attente</h2>
+        <table id="incident-table">
+            <thead>
+                <tr>
+                    <th scope="col">Statut</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="pending-list"></tbody>
+        </table>
+        <button onclick="syncReports()">Synchroniser maintenant</button>
+    </section>
+
+    <section id="settings" data-feature="settings-and-privacy" hidden>
+        <h2>Paramètres et confidentialité</h2>
+        <div class="setting-group">
+            <label for="toggle-notifications">Activer les notifications</label>
+            <input type="checkbox" id="toggle-notifications">
+        </div>
+        <div class="setting-group">
+            <label for="toggle-contrast">Mode haut contraste</label>
+            <input type="checkbox" id="toggle-contrast">
+        </div>
+        <button id="clear-storage">Effacer toutes les données locales</button>
+        
+        <div id="accessibility-settings" data-feature="accessibility">
+            <h3>Accessibilité</h3>
+            <label for="toggle-screen-reader">Optimisation lecteur d’écran</label>
+            <input type="checkbox" id="toggle-screen-reader">
+            <label for="toggle-keyboard-nav">Navigation clavier améliorée</label>
+            <input type="checkbox" id="toggle-keyboard-nav">
+        </div>
+    </section>
+
+    <section id="about" data-feature="about-and-help" hidden>
+        <h2>À propos de SafeGather</h2>
+        <p>SafeGather Alerts est un outil citoyen permettant de signaler en toute sécurité des incidents lors de rassemblements religieux.</p>
+        <h3>Fonctionnement hors ligne</h3>
+        <p>L’application enregistre vos signalements localement si vous n’avez pas de connexion. Ils seront envoyés dès que vous retrouverez un accès réseau.</p>
+        <h3>Confidentialité</h3>
+        <p>Aucune donnée personnelle n’est transmise. Vos signalements sont anonymes.</p>
+        <a href="mailto:support@safegather.org">Contactez le support</a>
+    </section>
+
+    <div id="offline-notice" data-feature="offline-support" role="alert" hidden>
+        ⚠️ Mode hors ligne : vous pouvez continuer à signaler, vos données seront synchronisées automatiquement une fois la connexion rétablie.
     </div>
-
-    <div id="mini-map-preview" class="card" role="region" aria-label="Aperçu de la carte des incidents récents">
-      <!-- La carte miniature sera injectée ici par JavaScript -->
-    </div>
-
-    <div class="quick-actions" role="navigation" aria-label="Actions rapides">
-      <button id="btn-report" data-feature="incident-report-form" class="btn primary" aria-label="Signaler un incident">
-        Signaler un incident
-      </button>
-      <button id="btn-view-map" data-feature="real-time-map-view" class="btn secondary" aria-label="Voir la carte complète">
-        Voir la carte
-      </button>
-    </div>
-
-    <!-- Bouton d’alerte d’urgence flottant -->
-    <button id="quick-alert-btn" data-feature="emergency-quick-alert" class="floating-alert" aria-label="Alerte d’urgence – envoyer un message pré‑rempli sur WhatsApp">
-      ⚠️ Alerte d’urgence
-    </button>
-  </section>
-
-  <!-- Formulaire de signalement d’incident -->
-  <section id="report" data-feature="incident-report-form" aria-labelledby="report-title" hidden>
-    <h1 id="report-title">Signaler un incident</h1>
-
-    <form id="incident-form" novalidate>
-      <fieldset>
-        <legend>Informations de localisation</legend>
-        <label for="location-input">Adresse ou point sur la carte</label>
-        <input type="text" id="location-input" name="location" required aria-required="true" placeholder="Exemple : 12 rue de la Paix, Paris">
-        <button type="button" id="pick-on-map-btn" class="btn secondary" aria-label="Choisir l’emplacement sur la carte">
-          Choisir sur la carte
-        </button>
-      </fieldset>
-
-      <fieldset>
-        <legend>Type d’incident</legend>
-        <label for="type-select">Sélectionner le type</label>
-        <select id="type-select" name="type" required aria-required="true">
-          <option value="">— Choisir —</option>
-          <option value="harassment">Harcèlement</option>
-          <option value="threat">Menace</option>
-          <option value="restriction">Restriction d’accès</option>
-          <option value="other">Autre</option>
-        </select>
-      </fieldset>
-
-      <fieldset>
-        <legend>Description (facultatif)</legend>
-        <label for="description-textarea">Décrivez brièvement ce qui s’est passé</label>
-        <textarea id="description-textarea" name="description" rows="4" placeholder="Exemple : Un groupe a bloqué l’entrée du lieu de culte…"></textarea>
-      </fieldset>
-
-      <fieldset>
-        <legend>Photo (facultatif)</legend>
-        <label for="photo-input">Ajouter une photo</label>
-        <input type="file" id="photo-input" name="photo" accept="image/*" aria-label="Ajouter une photo à l’incident">
-      </fieldset>
-
-      <div class="form-actions">
-        <button type="submit" class="btn primary" aria-label="Enregistrer le rapport d’incident">
-          Enregistrer
-        </button>
-        <button type="reset" class="btn secondary" aria-label="Réinitialiser le formulaire">
-          Réinitialiser
-        </button>
-      </div>
-    </form>
-  </section>
-
-  <!-- Carte interactive en temps réel -->
-  <section id="map" data-feature="real-time-map-view" aria-labelledby="map-title" hidden>
-    <h1 id="map-title">Carte en temps réel</h1>
-    <div id="full-map-container" role="region" aria-label="Carte interactive des incidents">
-      <!-- La carte sera initialisée par JavaScript -->
-    </div>
-
-    <!-- Modale de détail d’incident (injectée dynamiquement) -->
-    <div id="incident-detail-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title" hidden>
-      <h2 id="detail-modal-title">Détails de l’incident</h2>
-      <p id="detail-time"></p>
-      <p id="detail-type"></p>
-      <p id="detail-description"></p>
-      <img id="detail-photo" alt="Photo de l’incident" hidden>
-      <div class="modal-actions">
-        <button id="share-incident-btn" data-feature="share-incident" class="btn primary" aria-label="Partager l’incident">
-          Partager
-        </button>
-        <button id="close-detail-btn" class="btn secondary" aria-label="Fermer le panneau de détails">
-          Fermer
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Liste des rapports en attente de synchronisation -->
-  <section id="pending" data-feature="pending-reports-queue" aria-labelledby="pending-title" hidden>
-    <h1 id="pending-title">Rapports en attente</h1>
-    <ul id="pending-list" role="list" aria-label="Liste des rapports non synchronisés">
-      <!-- Les éléments seront ajoutés par JavaScript -->
-    </ul>
-    <div class="pending-actions">
-      <button id="sync-all-btn" class="btn primary" aria-label="Synchroniser tous les rapports en attente">
-        Synchroniser maintenant
-      </button>
-      <button id="clear-pending-btn" class="btn secondary" aria-label="Supprimer tous les rapports en attente">
-        Tout supprimer
-      </button>
-    </div>
-  </section>
-
-  <!-- Paramètres et confidentialité -->
-  <section id="settings" data-feature="settings-and-privacy" aria-labelledby="settings-title" hidden>
-    <h1 id="settings-title">Paramètres &amp; confidentialité</h1>
-
-    <fieldset>
-      <legend>Notifications</legend>
-      <label for="notif-toggle">
-        <input type="checkbox" id="notif-toggle" name="notifications">
-        Recevoir les notifications de nouveaux incidents
-      </label>
-    </fieldset>
-
-    <fieldset>
-      <legend>Application de partage par défaut</legend>
-      <label for="share-app-select">Choisir l’application</label>
-      <select id="share-app-select" name="shareApp">
-        <option value="whatsapp">WhatsApp</option>
-        <option value="email">E‑mail</option>
-      </select>
-    </fieldset>
-
-    <fieldset data-feature="accessibility">
-      <legend>Thème d’accessibilité</legend>
-      <label for="high-contrast-toggle">
-        <input type="checkbox" id="high-contrast-toggle" name="highContrast">
-        Activer le contraste élevé
-      </label>
-    </fieldset>
-
-    <fieldset>
-      <legend>Données locales</legend>
-      <p>Vous avez <span id="local-report-count">0</span> rapport(s) stocké(s) localement.</p>
-      <button id="clear-local-data-btn" class="btn secondary" aria-label="Effacer toutes les données locales">
-        Effacer les données locales
-      </button>
-    </fieldset>
-  </section>
-
-  <!-- À propos & aide -->
-  <section id="about" data-feature="about-and-help" aria-labelledby="about-title" hidden>
-    <h1 id="about-title">À propos &amp; aide</h1>
-
-    <article>
-      <h2>Fonctionnalités principales</h2>
-      <ul>
-        <li>Signalement d’incidents de harcèlement ou de restrictions lors de rassemblements religieux.</li>
-        <li>Affichage en temps réel sur une carte interactive.</li>
-        <li>Fonctionnement complet hors ligne avec mise en file d’attente des rapports.</li>
-        <li>Partage instantané via WhatsApp ou e‑mail.</li>
-        <li>Alerte d’urgence d’un seul tap.</li>
-        <li>Paramètres de confidentialité et de notifications.</li>
-        <li>Compatibilité avec les lecteurs d’écran et thème à contraste élevé.</li>
-      </ul>
-    </article>
-
-    <article>
-      <h2>Utilisation hors ligne</h2>
-      <p>Lorsque la connexion Internet est indisponible, l’application affiche une bannière d’avertissement et continue de permettre la création, la modification et la suppression de rapports. Tous les rapports sont stockés dans IndexedDB et seront synchronisés automatiquement dès que le réseau sera rétabli.</p>
-    </article>
-
-    <article>
-      <h2>Politique de confidentialité</h2>
-      <p>Aucune donnée personnelle n’est collectée ni transmise à des serveurs externes. Les rapports sont stockés uniquement sur l’appareil de l’utilisateur jusqu’à leur synchronisation sécurisée avec le serveur communautaire.</p>
-    </article>
-
-    <article>
-      <h2>Support &amp; contact</h2>
-      <p>Pour toute question ou suggestion, veuillez envoyer un e‑mail à <a href="mailto:support@safegather.org">support@safegather.org</a> ou rejoindre le groupe WhatsApp communautaire via le bouton d’alerte d’urgence.</p>
-    </article>
-  </section>
-
-  <!-- Section pour la gestion de l'état hors ligne -->
-  <section id="offline-management" data-feature="offline-support" hidden>
-    <p>Gestion des données hors ligne.</p>
-  </section>
 </main><footer class="tlm"><p>Créé par <a href="https://thelampsmark.pages.dev/" target="_blank" rel="noopener">The Lamp's Mark</a></p><p>Cette application est gratuite. Pour la soutenir : mobile money Africell <strong>0906253050</strong></p><p><a href="https://wa.me/?text=SafeGather%20Alerts%20%E2%80%93%20Real%E2%80%91time%20Religious%20Gathering%20Safety%20https%3A%2F%2Fdanymumbere.github.io%2Fsafegather-alerts%2F" target="_blank" rel="noopener">Partager sur WhatsApp</a> · <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdanymumbere.github.io%2Fsafegather-alerts%2F" target="_blank" rel="noopener">Facebook</a> · <button type="button" id="tlm-share">Partager</button></p></footer><script>document.getElementById('tlm-share').onclick=()=>navigator.share?navigator.share({title:document.title,url:location.href}):navigator.clipboard.writeText(location.href).then(()=>alert('Lien copié'))</script><script type="module" src="js/app.js"></script></body></html>

@@ -1,221 +1,176 @@
 // js/map.js
-// Module ES : rendu de la carte, clustering, pop-up et gestion du cache.
-// Dépendances autorisées : ./data.js, ./offline.js, ./ui.js
+import { incidentGeoJSON } from './data.js';
+import { getIncidents } from './offline.js';
+import L from 'leaflet'; // Assurez-vous d'avoir Leaflet inclus dans votre projet
+import 'leaflet.markercluster'; // Assurez-vous d'avoir Leaflet.markercluster inclus
 
-import { INCIDENTS } from "./data.js";
-import { getIncidents } from "./offline.js";
-import { showToast } from "./ui.js";
+// Sélecteurs HTML valides basés sur les IDs fournis
+const MINI_MAP_SELECTOR = '#mini-map';
+const FULL_MAP_SELECTOR = '#map';
+const INCIDENT_DETAIL_SELECTOR = '#incident-detail';
+const DETAIL_TITLE_SELECTOR = '#detail-title';
+const DETAIL_TIME_SELECTOR = '#detail-time';
+const DETAIL_TYPE_SELECTOR = '#detail-type';
+const DETAIL_DESCRIPTION_SELECTOR = '#detail-description';
+const DETAIL_PHOTO_SELECTOR = '#detail-photo';
+const SHARE_INCIDENT_BTN_SELECTOR = '#share-incident-btn';
+const CLOSE_DETAIL_BTN_SELECTOR = '#close-detail-btn';
 
-// ---------------------------------------------------------------------------
-// Variables internes
-// ---------------------------------------------------------------------------
-let miniMap = null;
-let fullMap = null;
+let miniMapInstance = null;
+let fullMapInstance = null;
 let markerClusterGroup = null;
 
-// ---------------------------------------------------------------------------
-// Initialisation de la mini-carte (dashboard)
-// ---------------------------------------------------------------------------
+// Initialise la carte miniature sur le dashboard
 export function initMiniMap() {
-  const container = document.getElementById("mini-map-preview");
-  if (!container) return;
+  if (miniMapInstance) return;
 
-  if (miniMap) miniMap.remove();
+  const miniMapElement = document.querySelector(MINI_MAP_SELECTOR);
+  if (!miniMapElement) return;
 
-  miniMap = L.map(container, {
-    zoomControl: false,
-    attributionControl: false,
+  miniMapInstance = L.map(miniMapElement, {
     dragging: false,
+    zoomControl: false,
     scrollWheelZoom: false,
     doubleClickZoom: false,
     boxZoom: false,
     keyboard: false,
-    tap: false,
-    touchZoom: false,
-  }).setView([48.8566, 2.3522], 2);
+  }).setView([0, 0], 2);
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    minZoom: 2,
-    detectRetina: true,
-  }).addTo(miniMap);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap'
+  }).addTo(miniMapInstance);
 
-  const recent = INCIDENTS.slice(-5).reverse();
-  recent.forEach((inc) => {
-    L.marker([inc.lat, inc.lng], {
-      title: inc.type,
-      alt: `Incident : ${inc.type}`,
-    }).addTo(miniMap);
-  });
+  refreshMiniMap();
 }
 
-// ---------------------------------------------------------------------------
-// Initialisation de la carte pleine taille
-// ---------------------------------------------------------------------------
+// Initialise la carte complète avec clustering et interactions
 export function initFullMap() {
-  const container = document.getElementById("map");
-  if (!container) return;
+  if (fullMapInstance) return;
 
-  if (fullMap) fullMap.remove();
+  const mapElement = document.querySelector(FULL_MAP_SELECTOR);
+  if (!mapElement) return;
 
-  fullMap = L.map(container, {
-    zoomControl: true,
-    attributionControl: true,
-    keyboard: true,
-  }).setView([48.8566, 2.3522], 6);
+  fullMapInstance = L.map(mapElement).setView([0, 0], 2);
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    minZoom: 2,
-    detectRetina: true,
-    attribution: "&copy; <a href='https://www.openstreetmap.org/'>OpenStreetMap</a>",
-  }).addTo(fullMap);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap'
+  }).addTo(fullMapInstance);
 
-  if (typeof L.markerClusterGroup === "function") {
-    markerClusterGroup = L.markerClusterGroup({
-      showCoverageOnHover: false,
-      spiderfyOnMaxZoom: true,
-      disableClusteringAtZoom: 16,
-    });
-    fullMap.addLayer(markerClusterGroup);
-  }
+  markerClusterGroup = L.markerClusterGroup({
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true
+  });
+
+  fullMapInstance.addLayer(markerClusterGroup);
+
+  // Gestionnaire de clic sur les marqueurs
+  markerClusterGroup.on('click', (e) => {
+    if (e.layer.getLatLng) {
+      const incident = e.layer.options.incident;
+      showIncidentDetail(incident);
+    }
+  });
 
   refreshMap();
 }
 
-// ---------------------------------------------------------------------------
-// Rafraîchit la carte avec les incidents stockés ou embarqués
-// ---------------------------------------------------------------------------
+// Met à jour les données des cartes (mini et complète)
 export async function refreshMap() {
-  try {
-    clearMap();
-    const cached = await getIncidents();
-    const incidents = cached.length > 0 ? cached : INCIDENTS;
-    loadIncidentsToMap(incidents);
-  } catch (err) {
-    console.error("Erreur lors du rafraîchissement de la carte :", err);
-    showToast("Impossible de charger les incidents.");
-  }
-}
+  const incidents = await getIncidents();
+  const allIncidents = [...incidentGeoJSON.features, ...incidents];
 
-// ---------------------------------------------------------------------------
-// Ajoute les incidents à la carte
-// ---------------------------------------------------------------------------
-function loadIncidentsToMap(incidents) {
-  if (!fullMap) return;
-
-  incidents.forEach((inc) => {
-    const marker = L.marker([inc.lat, inc.lng], {
-      title: inc.type,
-      alt: `Incident : ${inc.type}`,
-    });
-
-    marker.on("click", () => showIncidentDetail(inc));
-
-    if (markerClusterGroup) {
-      markerClusterGroup.addLayer(marker);
-    } else {
-      marker.addTo(fullMap);
-    }
-  });
-
-  if (incidents.length > 0 && markerClusterGroup) {
-    const bounds = markerClusterGroup.getBounds();
-    if (bounds.isValid()) {
-      fullMap.fitBounds(bounds.pad(0.2));
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Supprime tous les marqueurs
-// ---------------------------------------------------------------------------
-export function clearMap() {
   if (markerClusterGroup) {
     markerClusterGroup.clearLayers();
-  } else if (fullMap) {
-    fullMap.eachLayer((layer) => {
-      if (layer instanceof L.Marker) fullMap.removeLayer(layer);
+  }
+
+  allIncidents.forEach(incident => {
+    const { geometry, properties } = incident;
+    const marker = L.marker([geometry.coordinates[1], geometry.coordinates[0]], {
+      incident: properties
     });
-  }
-}
 
-// ---------------------------------------------------------------------------
-// Affiche le modal de détail
-// ---------------------------------------------------------------------------
-export function showIncidentDetail(incident) {
-  const modal = document.getElementById("incident-detail-modal");
-  if (!modal) return;
-
-  const titleEl = document.getElementById("detail-modal-title");
-  const timeEl = document.getElementById("detail-time");
-  const typeEl = document.getElementById("detail-type");
-  const descEl = document.getElementById("detail-description");
-  const photoEl = document.getElementById("detail-photo");
-
-  if (titleEl) titleEl.textContent = `Incident : ${incident.type}`;
-  if (timeEl) timeEl.textContent = new Date(incident.timestamp || Date.now()).toLocaleString("fr-FR");
-  if (typeEl) typeEl.textContent = incident.type;
-  if (descEl) descEl.textContent = incident.description || "Aucune description fournie.";
-  
-  if (photoEl) {
-    if (incident.photo) {
-      photoEl.src = incident.photo;
-      photoEl.style.display = "block";
-    } else {
-      photoEl.style.display = "none";
-    }
-  }
-
-  const shareBtn = document.getElementById("share-incident-btn");
-  if (shareBtn) {
-    const newShareBtn = shareBtn.cloneNode(true);
-    shareBtn.parentNode.replaceChild(newShareBtn, shareBtn);
-    newShareBtn.addEventListener("click", () => {
-      const ev = new CustomEvent("share-incident", { detail: incident });
-      document.dispatchEvent(ev);
-    });
-  }
-
-  modal.style.display = "block";
-  modal.setAttribute("aria-hidden", "false");
-
-  const closeBtn = document.getElementById("close-detail-btn");
-  if (closeBtn) closeBtn.focus();
-
-  const closeHandler = () => {
-    modal.style.display = "none";
-    modal.setAttribute("aria-hidden", "true");
-    document.removeEventListener("keydown", escHandler);
-  };
-
-  const escHandler = (e) => {
-    if (e.key === "Escape") closeHandler();
-  };
-
-  if (closeBtn) closeBtn.onclick = closeHandler;
-  document.addEventListener("keydown", escHandler);
-}
-
-// ---------------------------------------------------------------------------
-// Gestion du mode hors-ligne
-// ---------------------------------------------------------------------------
-export function handleOfflineMode(isOffline) {
-  if (isOffline) {
-    showToast("Mode hors-ligne activé. Les rapports seront stockés localement.");
-  } else {
-    showToast("Connexion rétablie.");
-    refreshMap();
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Sélecteur de carte pour le formulaire
-// ---------------------------------------------------------------------------
-export function openMapPicker() {
-  return new Promise((resolve) => {
-    showToast("Veuillez cliquer sur la carte pour sélectionner le lieu.");
-    // Simulation d'une sélection de coordonnées
-    resolve({ lat: 48.8566, lng: 2.3522 });
+    marker.bindPopup(createPopupContent(properties));
+    markerClusterGroup.addLayer(marker);
   });
+
+  refreshMiniMap();
+}
+
+// Met à jour spécifiquement la carte miniature
+function refreshMiniMap() {
+  if (!miniMapInstance) return;
+
+  miniMapInstance.eachLayer(layer => {
+    if (layer !== miniMapInstance._layers[0]) { // Conserve seulement le tile layer
+      miniMapInstance.removeLayer(layer);
+    }
+  });
+
+  const incidents = incidentGeoJSON.features.slice(0, 10); // Limite à 10 pour performance
+  incidents.forEach(incident => {
+    const { geometry, properties } = incident;
+    L.circleMarker([geometry.coordinates[1], geometry.coordinates[0]], {
+      radius: 4,
+      color: getIncidentColor(properties.incidentType),
+      fillOpacity: 0.8
+    }).addTo(miniMapInstance);
+  });
+}
+
+// Affiche les détails d'un incident dans un panneau latéral
+function showIncidentDetail(incident) {
+  const detailElement = document.querySelector(INCIDENT_DETAIL_SELECTOR);
+  if (!detailElement) return;
+
+  detailElement.classList.add('active');
+
+  document.querySelector(DETAIL_TITLE_SELECTOR).textContent = `Incident à ${formatLocation(incident.geometry.coordinates)}`;
+  document.querySelector(DETAIL_TIME_SELECTOR).textContent = `Le ${new Date(incident.properties.time).toLocaleString()}`;
+  document.querySelector(DETAIL_TYPE_SELECTOR).textContent = `Type : ${incident.properties.incidentType}`;
+  document.querySelector(DETAIL_DESCRIPTION_SELECTOR).textContent = incident.properties.description || 'Aucune description';
+
+  const photoElement = document.querySelector(DETAIL_PHOTO_SELECTOR);
+  if (incident.properties.photoUrl) {
+    photoElement.src = incident.properties.photoUrl;
+    photoElement.style.display = 'block';
+  } else {
+    photoElement.style.display = 'none';
+  }
+
+  // Gestion du bouton de partage
+  const shareBtn = document.querySelector(SHARE_INCIDENT_BTN_SELECTOR);
+  shareBtn.addEventListener('click', () => {
+    // Implémentez la logique de partage ici (voir module share.js)
+  }, { once: true });
+
+  // Fermeture du panneau
+  document.querySelector(CLOSE_DETAIL_BTN_SELECTOR).addEventListener('click', () => {
+    detailElement.classList.remove('active');
+  }, { once: true });
+}
+
+// Utilitaires
+function createPopupContent(properties) {
+  return `
+    <div class="map-popup">
+      <strong>${properties.incidentType}</strong>
+      <div>${new Date(properties.time).toLocaleString()}</div>
+      ${properties.description ? `<div>${properties.description}</div>` : ''}
+    </div>
+  `;
+}
+
+function getIncidentColor(type) {
+  const colors = {
+    harassment: '#FF5733',
+    threat: '#C70039',
+    restriction: '#900C3F',
+    other: '#581845'
+  };
+  return colors[type] || '#333';
+}
+
+function formatLocation([lng, lat]) {
+  return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
 }
