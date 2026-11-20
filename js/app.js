@@ -1,128 +1,196 @@
 // js/app.js
+// Main orchestrator for SafeGather Alerts.
+// Handles navigation, global state, module initialization, and offline status.
+
 import { incidentGeoJSON } from './data.js';
-import { initIndexedDB, syncPendingReports, getPendingReports } from './offline.js';
-import { initMiniMap, initFullMap, refreshMap } from './map.js';
-import { showReportForm, handleReportSubmit } from './report.js';
-import { showPendingReports, handlePendingReportAction } from './pending.js';
-import { showSettings } from './settings.js';
+import { initIndexedDB, initOfflineSupport } from './offline.js';
+import { initMiniMap, initFullMap } from './map.js';
+import { initReport } from './report.js';
+import { initShare } from './share.js';
+import { initUI, showToast } from './ui.js';
+import { initPending } from './pending.js';
+import { initSettings } from './settings.js';
 import { showAboutPage } from './about.js';
 import { emergencyQuickAlert } from './emergency-quick-alert.js';
-import { showToast, toggleSection } from './ui.js';
 
-// Correction des imports Leaflet
-import L from 'leaflet';
-import 'leaflet.markercluster';
+// Global application state
+const appState = {
+  currentSection: 'home',
+  offline: !navigator.onLine,
+  incidents: [],
+  pendingIncidents: [],
+};
 
-// Initialisation de l'application
+/**
+ * Navigate to a specific section, hiding others.
+ * @param {string} sectionId - The ID of the section to show.
+ */
+function navigateTo(sectionId) {
+  // Hide all known sections
+  const sections = document.querySelectorAll('#home, #report, #map, #pending, #settings, #about');
+  sections.forEach((el) => {
+    el.style.display = 'none';
+  });
+
+  const target = document.getElementById(sectionId);
+  if (target) {
+    target.style.display = 'block';
+    appState.currentSection = sectionId;
+  }
+
+  // Section‑specific initialization
+  switch (sectionId) {
+    case 'about':
+      showAboutPage();
+      break;
+    case 'map':
+      initFullMap();
+      break;
+    case 'pending':
+      initPending();
+      break;
+    // Other sections are handled by their modules on load
+  }
+}
+
+/**
+ * Update the offline status banner.
+ */
+function updateOfflineBanner() {
+  const banner = document.getElementById('offline-notice');
+  if (!banner) return;
+  const isOffline = !navigator.onLine;
+  banner.style.display = isOffline ? 'block' : 'none';
+/**
+ * Initialize the application.
+ */
 async function initApp() {
+  // Initialize offline support (IndexedDB, service worker, etc.)
+  await initIndexedDB();
+  initOfflineSupport();
+
+  // Load initial incidents from the module data
+  appState.incidents = incidentGeoJSON;
+
+  // Initialize UI components (toasts, navigation, etc.)
+  initUI();
+
+  // Set up navigation links
+  document.querySelectorAll('nav a').forEach((link) => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const section = link.getAttribute('href').replace('#', '');
+      navigateTo(section);
+    });
+  });
+
+  // Show the home section by default
+  navigateTo('home');
+
+  // Start monitoring online/offline status
+  window.addEventListener('online', () => {
+    updateOfflineBanner();
+    // Attempt to sync pending incidents when back online
+    syncPendingIncidents();
+  });
+  window.addEventListener('offline', () => {
+    updateOfflineBanner();
+  });
+
+  // Periodically update the offline banner (every 30 seconds)
+  setInterval(updateOfflineBanner, 30000);
+
+  // Initialize mini-map in the report section (if present)
+  initMiniMap();
+
+  // Initialize report module
+  initReport();
+
+  // Initialize share module
+  initShare();
+
+  // Initialize pending incidents module
+  initPending();
+
+  // Initialize settings module
+  initSettings();
+
+  // Initialize emergency quick alert button
+  emergencyQuickAlert();
+
+  // Show a welcome toast
+  showToast('SafeGather Alerts is ready.');
+}
+
+/**
+ * Sync pending incidents to the server when online.
+ */
+async function syncPendingIncidents() {
+  const pending = appState.pendingIncidents;
+  if (pending.length === 0) return;
+
   try {
-    // Initialisation de la base de données IndexedDB
-    await initIndexedDB();
+    // Example fetch – adjust endpoint as needed
+    const response = await fetch('/api/incidents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(pending),
+    });
 
-    // Initialisation des composants principaux
-    initMiniMap();
-    initFullMap();
-    emergencyQuickAlert();
-
-    // Chargement initial des données
-    refreshMap();
-    updateIncidentCount();
-    showHomeDashboard();
-
-    // Gestion des événements de navigation
-    setupNavigation();
-
-    // Vérification de la connexion et gestion hors ligne
-    checkConnectivity();
-    window.addEventListener('online', checkConnectivity);
-    window.addEventListener('offline', checkConnectivity);
-
-    // Synchronisation périodique des rapports en attente
-    setInterval(syncPendingReports, 60000);
-  } catch (error) {
-    console.error('Erreur lors de l’initialisation de l’application :', error);
-    showToast('Échec de l’initialisation. Vérifiez votre connexion.');
+    if (response.ok) {
+      // Clear pending incidents on successful submission
+      appState.pendingIncidents = [];
+      await initIndexedDB(); // Refresh IndexedDB store
+      showToast('Pending incidents synced.');
+    } else {
+      showToast('Failed to sync some incidents.');
+    }
+  } catch (err) {
+    console.error('Sync error:', err);
+    showToast('Network error while syncing.');
   }
 }
 
-// Gestion de la navigation entre les sections
-function setupNavigation() {
-  document.getElementById('btn-home').addEventListener('click', () => {
-    showHomeDashboard();
-    toggleSection('home');
-  });
+// Start the app when the DOM is ready
+import { incidentGeoJSON } from './data.js';
+...
+const appState = {
+  currentSection: 'home',
+  offline: !navigator.onLine,
+  incidents: [],
+  pendingIncidents: [],
+};
 
-  document.getElementById('btn-report').addEventListener('click', () => {
-    showReportForm();
-    toggleSection('report');
-  });
-
-  document.getElementById('btn-map').addEventListener('click', () => {
-    refreshMap();
-    toggleSection('map');
-  });
-
-  document.getElementById('btn-pending').addEventListener('click', async () => {
-    const pendingReports = await getPendingReports();
-    showPendingReports(pendingReports);
-    toggleSection('pending');
-  });
-
-  document.getElementById('btn-settings').addEventListener('click', () => {
-    showSettings();
-    toggleSection('settings');
-  });
-
-  document.getElementById('btn-about').addEventListener('click', () => {
-    showAboutPage();
-    toggleSection('about');
-  });
+/**
+ * Navigate to a specific section...
+ */
+function navigateTo(sectionId) {
+...
 }
 
-// Affichage du tableau de bord d'accueil
-function showHomeDashboard() {
-  toggleSection('home');
-  updateIncidentCount();
-  refreshMiniMap();
+/**
+ * Update the offline status banner.
+ */
+function updateOfflineBanner() {
+  const banner = document.getElementById('offline-notice');
+  if (!banner) return;
+  const isOffline = !navigator.onLine;
+  banner.style.display = isOffline ? 'block' : 'none';
+/**
+ * Initialize the application.
+ */
+async function initApp() {
+...
+  // Show a welcome toast
+  showToast('SafeGather Alerts is ready.');
 }
 
-// Mise à jour du compteur d'incidents
-async function updateIncidentCount() {
-  const count = await getIncidentCount();
-  const incidentCountElement = document.getElementById('incident-count');
-  if (incidentCountElement) {
-    incidentCountElement.textContent = `${count} incident${count > 1 ? 's' : ''} signalé${count > 1 ? 's' : ''}`;
-  }
+/**
+ * Sync pending incidents to the server when online.
+ */
+async function syncPendingIncidents() {
+...
 }
 
-// Récupération du nombre total d'incidents
-async function getIncidentCount() {
-  const db = await initIndexedDB();
-  const tx = db.transaction(['incidents'], 'readonly');
-  const store = tx.objectStore('incidents');
-  return new Promise((resolve) => {
-    const request = store.count();
-    request.onsuccess = () => resolve(request.result);
-  });
-}
-
-// Vérification de la connectivité réseau
-function checkConnectivity() {
-  const isOnline = navigator.onLine;
-  const offlineNotice = document.getElementById('offline-notice');
-  if (offlineNotice) {
-    offlineNotice.style.display = isOnline ? 'none' : 'block';
-  }
-  if (!isOnline) {
-    showToast('Mode hors ligne activé. Les données seront synchronisées ultérieurement.');
-  }
-}
-
-// Initialisation de l'application au chargement
+// Start the app when the DOM is ready
 document.addEventListener('DOMContentLoaded', initApp);
-
-// Gestion globale des erreurs non gérées
-window.addEventListener('error', (event) => {
-  console.error('Erreur non gérée :', event.error);
-  showToast('Une erreur technique est survenue. Veuillez réessayer.');
-});
