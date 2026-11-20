@@ -174,12 +174,12 @@ async function updateHomeDashboard() {
 /* -------------------------------------------------------------------------- */
 function shareIncident(props) {
   if (navigator.share) {
-    const title = `Incident ${props.id || ""}`;
+const title = `Incident ${props.id || ""}`;
     const text = `${props.incidentType} - ${props.description || ""}`;
     const url = `${window.location.origin}${window.location.pathname}#incident-${props.id}`;
     navigator.share({ title, text, url }).catch(err => console.error("Share failed:", err));
   } else {
-    // Fallback: copier le lien dans le presse‑papier
+    // Solution de repli : copier le lien dans le presse‑papier
     const url = `${window.location.origin}${window.location.pathname}#incident-${props.id}`;
     navigator.clipboard.writeText(url).then(() => {
       alert("Lien copié dans le presse‑papier : " + url);
