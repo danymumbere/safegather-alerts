@@ -9,6 +9,10 @@ import { showAboutPage } from './about.js';
 import { emergencyQuickAlert } from './emergency-quick-alert.js';
 import { showToast, toggleSection } from './ui.js';
 
+// Correction des imports Leaflet
+import L from 'leaflet';
+import 'leaflet.markercluster';
+
 // Initialisation de l'application
 async function initApp() {
   try {
@@ -43,12 +47,36 @@ async function initApp() {
 
 // Gestion de la navigation entre les sections
 function setupNavigation() {
-  document.getElementById('btn-home').addEventListener('click', showHomeDashboard);
-  document.getElementById('btn-report').addEventListener('click', () => toggleSection('report'));
-  document.getElementById('btn-map').addEventListener('click', () => toggleSection('map'));
-  document.getElementById('btn-pending').addEventListener('click', () => toggleSection('pending'));
-  document.getElementById('btn-settings').addEventListener('click', () => toggleSection('settings'));
-  document.getElementById('btn-about').addEventListener('click', () => toggleSection('about'));
+  document.getElementById('btn-home').addEventListener('click', () => {
+    showHomeDashboard();
+    toggleSection('home');
+  });
+
+  document.getElementById('btn-report').addEventListener('click', () => {
+    showReportForm();
+    toggleSection('report');
+  });
+
+  document.getElementById('btn-map').addEventListener('click', () => {
+    refreshMap();
+    toggleSection('map');
+  });
+
+  document.getElementById('btn-pending').addEventListener('click', async () => {
+    const pendingReports = await getPendingReports();
+    showPendingReports(pendingReports);
+    toggleSection('pending');
+  });
+
+  document.getElementById('btn-settings').addEventListener('click', () => {
+    showSettings();
+    toggleSection('settings');
+  });
+
+  document.getElementById('btn-about').addEventListener('click', () => {
+    showAboutPage();
+    toggleSection('about');
+  });
 }
 
 // Affichage du tableau de bord d'accueil
@@ -61,7 +89,10 @@ function showHomeDashboard() {
 // Mise à jour du compteur d'incidents
 async function updateIncidentCount() {
   const count = await getIncidentCount();
-  document.getElementById('incident-count').textContent = `${count} incident${count > 1 ? 's' : ''} signalé${count > 1 ? 's' : ''}`;
+  const incidentCountElement = document.getElementById('incident-count');
+  if (incidentCountElement) {
+    incidentCountElement.textContent = `${count} incident${count > 1 ? 's' : ''} signalé${count > 1 ? 's' : ''}`;
+  }
 }
 
 // Récupération du nombre total d'incidents
