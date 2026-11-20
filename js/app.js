@@ -140,18 +140,7 @@ async function syncPendingIncidents() {
     if (response.ok) {
       // Clear pending incidents on successful submission
       appState.pendingIncidents = [];
-      await initIndexedDB(); // Refresh IndexedDB store
-      showToast('Pending incidents synced.');
-    } else {
-      showToast('Failed to sync some incidents.');
-    }
-  } catch (err) {
-    console.error('Sync error:', err);
-    showToast('Network error while syncing.');
-  }
-}
-
-// Start the app when the DOM is ready
+// Démarrer l'application lorsque le DOM est prêt
 import { incidentGeoJSON } from './data.js';
 ...
 const appState = {
@@ -162,7 +151,7 @@ const appState = {
 };
 
 /**
- * Navigate to a specific section...
+ * Naviguer vers une section spécifique...
  */
 function navigateTo(sectionId) {
 ...
