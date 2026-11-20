@@ -160,31 +160,7 @@ function showIncidentDetail(props) {
 
 /* -------------------------------------------------------------------------- */
 /*  Tableau de bord d’accueil                                                  */
-/* -------------------------------------------------------------------------- */
-async function updateHomeDashboard() {
-  const countEl = document.querySelector(INCIDENT_COUNT);
-  if (!countEl) return;
-  const stored = await getIncidents();
-  const total = incidentGeoJSON.features.length + stored.length;
-  countEl.textContent = `${total}`;
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Partage d’un incident (Web Share API)                                     */
-/* -------------------------------------------------------------------------- */
-function shareIncident(props) {
-  if (navigator.share) {
-const title = `Incident ${props.id || ""}`;
-    const text = `${props.incidentType} - ${props.description || ""}`;
-    const url = `${window.location.origin}${window.location.pathname}#incident-${props.id}`;
-    navigator.share({ title, text, url }).catch(err => console.error("Share failed:", err));
-  } else {
-    // Solution de repli : copier le lien dans le presse‑papier
-    const url = `${window.location.origin}${window.location.pathname}#incident-${props.id}`;
-    navigator.clipboard.writeText(url).then(() => {
-      alert("Lien copié dans le presse‑papier : " + url);
-    }).catch(err => console.error("Copy failed:", err));
-  }
+document.querySelector("#btn-pending").addEventListener("click", async () => {
 }
 
 /* -------------------------------------------------------------------------- */
