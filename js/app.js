@@ -22,14 +22,13 @@ const SECTIONS = [
 /**
  * Orchestrateur principal de l’application
  */
-window.App = {
+const App = {
   init() {
     this.setupEventListeners();
     this.initializeModules();
     this.updateDashboardStats();
     this.handleOfflineStatus();
     this.navigateTo('home-dashboard');
-    this.registerServiceWorker();
   },
 
   // Navigation entre les sections
@@ -91,7 +90,10 @@ window.App = {
     }
   },
 
-  // Mise à jour des statistiques sur le dashboard
+  // Initialisation au chargement du DOM
+document.addEventListener('DOMContentLoaded', () => App.init());
+
+// Mise à jour des statistiques sur le dashboard
   updateDashboardStats() {
     const totalCountEl = document.getElementById('totalCount');
     if (totalCountEl && incidentGeoJSON.features) {
