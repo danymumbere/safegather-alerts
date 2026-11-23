@@ -22,7 +22,7 @@ const SECTIONS = [
 /**
  * Orchestrateur principal de l’application
  */
-const App = {
+window.App = {
   init() {
     this.setupEventListeners();
     this.initializeModules();
@@ -90,10 +90,7 @@ const App = {
     }
   },
 
-  // Initialisation au chargement du DOM
-document.addEventListener('DOMContentLoaded', () => App.init());
-
-// Mise à jour des statistiques sur le dashboard
+  // Mise à jour des statistiques sur le dashboard
   updateDashboardStats() {
     const totalCountEl = document.getElementById('totalCount');
     if (totalCountEl && incidentGeoJSON.features) {
