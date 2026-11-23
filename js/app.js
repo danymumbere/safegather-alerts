@@ -22,7 +22,7 @@ const SECTIONS = [
 /**
  * Orchestrateur principal de l’application
  */
-const App = {
+window.App = {
   init() {
     this.setupEventListeners();
     this.initializeModules();
