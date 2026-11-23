@@ -1,10 +1,10 @@
 import { incidentGeoJSON } from './data.js';
-import { initOfflineSupport } from './offline.js';
+import { initIndexedDB } from './offline.js';
 import { initMiniMap, initFullMap } from './map.js';
-import { initReportForm } from './report.js';
-import { initShareHandlers } from './share.js';
+import { showReportForm, handleReportSubmit } from './report.js';
+import { shareViaWhatsApp, shareViaEmail } from './share.js';
 import { showToast } from './ui.js';
-import { initPendingQueue } from './pending.js';
+import { showPendingReports, deletePendingReport } from './pending.js';
 import { initSettings } from './settings.js';
 import { showAboutPage } from './about.js';
 import { emergencyQuickAlert } from './emergency-quick-alert.js';
@@ -22,7 +22,7 @@ const SECTIONS = [
 /**
  * Orchestrateur principal de l’application
  */
-window.App = {
+const App = {
   init() {
     this.setupEventListeners();
     this.initializeModules();
@@ -49,14 +49,13 @@ window.App = {
   // Initialisation des modules importés
   initializeModules() {
     try {
-      initOfflineSupport();
+      initIndexedDB();
       initMiniMap();
-      initReportForm();
-      initPendingQueue();
+      showReportForm();
+      showPendingReports();
       initSettings();
       showAboutPage();
       emergencyQuickAlert();
-      initShareHandlers();
     } catch (error) {
       console.error('Erreur lors de l’initialisation des modules :', error);
       showToast('Erreur lors du chargement de l’application');
@@ -125,6 +124,7 @@ window.App = {
 };
 
 // Lancement de l’application
+window.App = App;
 document.addEventListener('DOMContentLoaded', () => {
   App.init();
 });

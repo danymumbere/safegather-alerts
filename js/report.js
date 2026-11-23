@@ -1,7 +1,7 @@
 // js/report.js
 import { saveIncident, getIncidents } from './offline.js';
-import { showNotification } from './ui.js';
-import { shareIncident } from './share.js';
+import { showToast } from './ui.js';
+import { shareViaWhatsApp } from './share.js';
 
 // Sélecteurs HTML valides basés sur les IDs fournis
 const REPORT_FORM_SELECTOR = '#incident-report-form';
