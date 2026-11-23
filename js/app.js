@@ -22,7 +22,7 @@ const SECTIONS = [
 /**
  * Orchestrateur principal de l’application
  */
-const App = {
+window.App = {
   init() {
     this.setupEventListeners();
     this.initializeModules();
@@ -68,11 +68,17 @@ const App = {
     const navHome = document.getElementById('nav-home');
     const navMap = document.getElementById('nav-map');
     const navReport = document.getElementById('nav-report');
+    const navPending = document.getElementById('nav-pending');
+    const navSettings = document.getElementById('nav-settings');
+    const navAbout = document.getElementById('nav-about');
     const closeDetailBtn = document.getElementById('close-detail-btn');
 
     if (navHome) navHome.addEventListener('click', () => this.navigateTo('home-dashboard'));
     if (navMap) navMap.addEventListener('click', () => this.navigateTo('real-time-map-view'));
     if (navReport) navReport.addEventListener('click', () => this.navigateTo('incident-report-form'));
+    if (navPending) navPending.addEventListener('click', () => this.navigateTo('pending-reports-queue'));
+    if (navSettings) navSettings.addEventListener('click', () => this.navigateTo('settings-and-privacy'));
+    if (navAbout) navAbout.addEventListener('click', () => this.navigateTo('about-and-help'));
 
     if (closeDetailBtn) {
       closeDetailBtn.addEventListener('click', () => {
