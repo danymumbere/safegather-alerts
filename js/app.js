@@ -124,7 +124,6 @@ const App = {
 };
 
 // Lancement de l’application
-window.App = App;
 document.addEventListener('DOMContentLoaded', () => {
-  App.init();
+  window.App.init();
 });

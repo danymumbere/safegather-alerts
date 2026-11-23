@@ -1,7 +1,7 @@
 // js/map.js
 import { incidentGeoJSON } from './data.js';
 import { getIncidents } from './offline.js';
-import * as L from 'https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.esm.js'; // Assurez-vous d'avoir Leaflet inclus dans votre projet
+// Leaflet est chargé via script CDN dans index.html, L est disponible globalement // Assurez-vous d'avoir Leaflet inclus dans votre projet
 import 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js';
 
 // Sélecteurs HTML valides basés sur les IDs fournis
