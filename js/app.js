@@ -1,185 +1,126 @@
-// js/app.js
-// Main orchestrator for SafeGather Alerts.
-// Handles navigation, global state, module initialization, and offline status.
-
 import { incidentGeoJSON } from './data.js';
-import { initIndexedDB, initOfflineSupport } from './offline.js';
+import { initOfflineSupport } from './offline.js';
 import { initMiniMap, initFullMap } from './map.js';
-import { initReport } from './report.js';
-import { initShare } from './share.js';
-import { initUI, showToast } from './ui.js';
-import { initPending } from './pending.js';
+import { initReportForm } from './report.js';
+import { initShareHandlers } from './share.js';
+import { showToast } from './ui.js';
+import { initPendingQueue } from './pending.js';
 import { initSettings } from './settings.js';
 import { showAboutPage } from './about.js';
 import { emergencyQuickAlert } from './emergency-quick-alert.js';
 
-// Global application state
-const appState = {
-  currentSection: 'home',
-  offline: !navigator.onLine,
-  incidents: [],
-  pendingIncidents: [],
-};
+// Liste des sections principales pour la navigation
+const SECTIONS = [
+  'home-dashboard',
+  'incident-report-form',
+  'real-time-map-view',
+  'pending-reports-queue',
+  'settings-and-privacy',
+  'about-and-help'
+];
 
 /**
- * Navigate to a specific section, hiding others.
- * @param {string} sectionId - The ID of the section to show.
+ * Orchestrateur principal de l’application
  */
-function navigateTo(sectionId) {
-  // Hide all known sections
-  const sections = document.querySelectorAll('#home, #report, #map, #pending, #settings, #about');
-  sections.forEach((el) => {
-    el.style.display = 'none';
-  });
+const App = {
+  init() {
+    this.setupEventListeners();
+    this.initializeModules();
+    this.updateDashboardStats();
+    this.handleOfflineStatus();
+    this.navigateTo('home-dashboard');
+    this.registerServiceWorker();
+  },
 
-  const target = document.getElementById(sectionId);
-  if (target) {
-    target.style.display = 'block';
-    appState.currentSection = sectionId;
-  }
+  // Navigation entre les sections
+  navigateTo(sectionId) {
+    SECTIONS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.display = (id === sectionId) ? 'block' : 'none';
+      }
+    });
 
-  // Section‑specific initialization
-  switch (sectionId) {
-    case 'about':
-      showAboutPage();
-      break;
-    case 'map':
+    // Initialisation spécifique lors de l’accès à la carte
+    if (sectionId === 'real-time-map-view') {
       initFullMap();
-      break;
-    case 'pending':
-      initPending();
-      break;
-    // Other sections are handled by their modules on load
+    }
+  },
+
+  // Initialisation des modules importés
+  initializeModules() {
+    try {
+      initOfflineSupport();
+      initMiniMap();
+      initReportForm();
+      initPendingQueue();
+      initSettings();
+      showAboutPage();
+      emergencyQuickAlert();
+      initShareHandlers();
+    } catch (error) {
+      console.error('Erreur lors de l’initialisation des modules :', error);
+      showToast('Erreur lors du chargement de l’application');
+    }
+  },
+
+  // Configuration des écouteurs globaux
+  setupEventListeners() {
+    const reportBtn = document.getElementById('reportBtn');
+    const mapBtn = document.getElementById('mapBtn');
+    const closeDetailBtn = document.getElementById('close-detail-btn');
+
+    if (reportBtn) {
+      reportBtn.addEventListener('click', () => this.navigateTo('incident-report-form'));
+    }
+
+    if (mapBtn) {
+      mapBtn.addEventListener('click', () => this.navigateTo('real-time-map-view'));
+    }
+
+    if (closeDetailBtn) {
+      closeDetailBtn.addEventListener('click', () => {
+        const detail = document.getElementById('marker-detail');
+        if (detail) detail.style.display = 'none';
+      });
+    }
+  },
+
+  // Mise à jour des statistiques sur le dashboard
+  updateDashboardStats() {
+    const totalCountEl = document.getElementById('totalCount');
+    if (totalCountEl && incidentGeoJSON.features) {
+      totalCountEl.textContent = `${incidentGeoJSON.features.length}`;
+    }
+  },
+
+  // Gestion de l’état hors ligne
+  handleOfflineStatus() {
+    const offlineBanner = document.getElementById('offline-support');
+    const updateStatus = () => {
+      if (offlineBanner) {
+        offlineBanner.style.display = navigator.onLine ? 'none' : 'block';
+      }
+    };
+
+    window.addEventListener('online', updateStatus);
+    window.addEventListener('offline', updateStatus);
+    updateStatus();
+  },
+
+  // Enregistrement du Service Worker
+  registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(() => console.log('Service Worker enregistré avec succès.'))
+          .catch(err => console.error('Échec de l’enregistrement du Service Worker :', err));
+      });
+    }
   }
-}
-
-/**
- * Update the offline status banner.
- */
-function updateOfflineBanner() {
-  const banner = document.getElementById('offline-notice');
-  if (!banner) return;
-  const isOffline = !navigator.onLine;
-  banner.style.display = isOffline ? 'block' : 'none';
-/**
- * Initialize the application.
- */
-async function initApp() {
-  // Initialize offline support (IndexedDB, service worker, etc.)
-  await initIndexedDB();
-  initOfflineSupport();
-
-  // Load initial incidents from the module data
-  appState.incidents = incidentGeoJSON;
-
-  // Initialize UI components (toasts, navigation, etc.)
-  initUI();
-
-  // Set up navigation links
-  document.querySelectorAll('nav a').forEach((link) => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      const section = link.getAttribute('href').replace('#', '');
-      navigateTo(section);
-    });
-  });
-
-  // Show the home section by default
-  navigateTo('home');
-
-  // Start monitoring online/offline status
-  window.addEventListener('online', () => {
-    updateOfflineBanner();
-    // Attempt to sync pending incidents when back online
-    syncPendingIncidents();
-  });
-  window.addEventListener('offline', () => {
-    updateOfflineBanner();
-  });
-
-  // Periodically update the offline banner (every 30 seconds)
-  setInterval(updateOfflineBanner, 30000);
-
-  // Initialize mini-map in the report section (if present)
-  initMiniMap();
-
-  // Initialize report module
-  initReport();
-
-  // Initialize share module
-  initShare();
-
-  // Initialize pending incidents module
-  initPending();
-
-  // Initialize settings module
-  initSettings();
-
-  // Initialize emergency quick alert button
-  emergencyQuickAlert();
-
-  // Show a welcome toast
-  showToast('SafeGather Alerts is ready.');
-}
-
-/**
- * Sync pending incidents to the server when online.
- */
-async function syncPendingIncidents() {
-  const pending = appState.pendingIncidents;
-  if (pending.length === 0) return;
-
-  try {
-    // Example fetch – adjust endpoint as needed
-    const response = await fetch('/api/incidents', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(pending),
-    });
-
-    if (response.ok) {
-      // Clear pending incidents on successful submission
-      appState.pendingIncidents = [];
-// Démarrer l'application lorsque le DOM est prêt
-import { incidentGeoJSON } from './data.js';
-...
-const appState = {
-  currentSection: 'home',
-  offline: !navigator.onLine,
-  incidents: [],
-  pendingIncidents: [],
 };
 
-/**
- * Naviguer vers une section spécifique...
- */
-function navigateTo(sectionId) {
-...
-}
-
-/**
- * Update the offline status banner.
- */
-function updateOfflineBanner() {
-  const banner = document.getElementById('offline-notice');
-  if (!banner) return;
-  const isOffline = !navigator.onLine;
-  banner.style.display = isOffline ? 'block' : 'none';
-/**
- * Initialize the application.
- */
-async function initApp() {
-...
-  // Show a welcome toast
-  showToast('SafeGather Alerts is ready.');
-}
-
-/**
- * Sync pending incidents to the server when online.
- */
-async function syncPendingIncidents() {
-...
-}
-
-// Start the app when the DOM is ready
-document.addEventListener('DOMContentLoaded', initApp);
+// Lancement de l’application
+document.addEventListener('DOMContentLoaded', () => {
+  App.init();
+});

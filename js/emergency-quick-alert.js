@@ -1,38 +1,41 @@
 // js/emergency-quick-alert.js
 import { showToast } from './ui.js';
+import { shareViaWhatsApp } from './share.js';
 
+// Sélecteur HTML valide pour le bouton d'alerte d'urgence
+const EMERGENCY_BTN_SELECTOR = '#emergency-alert-btn';
+
+// Message pré-rempli pour l'alerte d'urgence
+const EMERGENCY_MESSAGE = `🚨 ALERTE URGENTE 🚨
+Menace immédiate détectée lors d'un rassemblement religieux.
+Veuillez intervenir immédiatement.`;
+
+// Exporte la fonction principale pour configurer l'alerte d'urgence
 export function emergencyQuickAlert() {
-  const btn = document.querySelector('#emergency-quick-alert');
-  if (!btn) {
-    return;
-  }
+  const emergencyBtn = document.querySelector(EMERGENCY_BTN_SELECTOR);
+  if (!emergencyBtn) return;
 
-  // Étiquette accessible pour les lecteurs d’écran
-  btn.setAttribute('aria-label', 'Alerte d’urgence rapide – Envoyer un message WhatsApp d’alerte immédiate');
+  // Configuration de l'accessibilité
+  emergencyBtn.setAttribute('aria-label', 'Envoyer une alerte d\'urgence');
+  emergencyBtn.setAttribute('role', 'button');
 
-  const handleClick = async () => {
-    // Construction du message d’alerte
-    const location = 'Localisation actuelle';
-    const mapUrl = `${window.location.origin}/map?emergency=true`;
-    const message = `ALERTE URGENTE : Menace immédiate détectée à ${location}. Consultez la carte pour plus de détails.`;
-    const encodedMessage = encodeURIComponent(message);
-    const encodedMapUrl = encodeURIComponent(mapUrl);
-    const whatsappUrl = `whatsapp://send?text=${encodedMessage}%0A%0ACarte : ${encodedMapUrl}`;
-
+  // Gestionnaire d'événement pour l'alerte d'urgence
+  emergencyBtn.addEventListener('click', () => {
     try {
-      // Tentative d’ouverture de WhatsApp via le schéma personnalisé
-      window.location.href = whatsappUrl;
+      shareViaWhatsApp(EMERGENCY_MESSAGE);
+      showToast('Alerte d\'urgence envoyée avec succès');
     } catch (error) {
-      // Solution de repli si WhatsApp n’est pas installé
-      showToast('Ouverture de WhatsApp… Si rien ne s’ouvre, installez WhatsApp ou utilisez le lien ci-dessous.');
-      const fallbackLink = document.createElement('a');
-      fallbackLink.href = `https://wa.me/?text=${encodedMessage}%0A%0ACarte : ${encodedMapUrl}`;
-      fallbackLink.target = '_blank';
-      fallbackLink.textContent = 'Ouvrir WhatsApp Web';
-      fallbackLink.className = 'btn btn-primary mt-2';
-      alert('Si WhatsApp ne s’ouvre pas, cliquez ici pour utiliser WhatsApp Web : ' + fallbackLink.outerHTML);
+      showToast('Échec de l\'envoi de l\'alerte d\'urgence');
+      console.error('Erreur lors de l\'envoi de l\'alerte:', error);
     }
-  };
+  });
 
-  btn.addEventListener('click', handleClick);
+  // Gestion du focus visible pour l'accessibilité
+  emergencyBtn.addEventListener('focus', () => {
+    emergencyBtn.classList.add('focus-visible');
+  });
+
+  emergencyBtn.addEventListener('blur', () => {
+    emergencyBtn.classList.remove('focus-visible');
+  });
 }

@@ -1,107 +1,127 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SafeGather Alerts – Real‑time Religious Gathering Safety</title><meta name="description" content="Mobile‑first, offline‑first app to instantly report and track safety incidents at religious gatherings. Share alerts via WhatsApp/Email and keep your community protected, even without internet."><meta name="keywords" content="religious safety, community alerts, offline, privacy, WhatsApp, map, emergency reporting"><link rel="canonical" href="https://danymumbere.github.io/safegather-alerts/"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0a7d6c"><meta property="og:type" content="website"><meta property="og:site_name" content="The Lamp's Mark"><meta property="og:title" content="SafeGather Alerts – Real‑time Religious Gathering Safety"><meta property="og:description" content="Mobile‑first, offline‑first app to instantly report and track safety incidents at religious gatherings. Share alerts via WhatsApp/Email and keep your community protected, even without internet."><meta property="og:url" content="https://danymumbere.github.io/safegather-alerts/"><meta property="og:image" content="https://danymumbere.github.io/safegather-alerts/og.svg"><meta property="og:image:alt" content="SafeGather Alerts – Real‑time Religious Gathering Safety"><meta property="og:locale" content="fr_FR"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="SafeGather Alerts – Real‑time Religious Gathering Safety"><meta name="twitter:description" content="Mobile‑first, offline‑first app to instantly report and track safety incidents at religious gatherings. Share alerts via WhatsApp/Email and keep your community protected, even without internet."><meta name="twitter:image" content="https://danymumbere.github.io/safegather-alerts/og.svg"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"SafeGather Alerts – Real‑time Religious Gathering Safety","description":"Mobile‑first, offline‑first app to instantly report and track safety incidents at religious gatherings. Share alerts via WhatsApp/Email and keep your community protected, even without internet.","url":"https://danymumbere.github.io/safegather-alerts/","applicationCategory":"LifestyleApplication","inLanguage":"fr","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"creator":{"@type":"Organization","name":"The Lamp's Mark","url":"https://thelampsmark.pages.dev/"}}</script><link rel="stylesheet" href="style.css"></head><body><main>
-    <nav aria-label="Navigation principale">
-        <button id="btn-home" data-feature="home-dashboard" aria-controls="home">Accueil</button>
-        <button id="btn-report" data-feature="incident-report-form" aria-controls="report">Signaler</button>
-        <button id="btn-map" data-feature="real-time-map-view" aria-controls="map">Carte</button>
-        <button id="btn-pending" data-feature="pending-reports-queue" aria-controls="pending">En attente</button>
-        <button id="btn-settings" data-feature="settings-and-privacy" aria-controls="settings">Paramètres</button>
-        <button id="btn-about" data-feature="about-and-help" aria-controls="about">À propos</button>
-    </nav>
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SafeGather Alerts – Real‑time Religious Gathering Safety</title><meta name="description" content="Mobile‑first, offline‑first app to instantly report and track safety incidents at religious gatherings. Share alerts via WhatsApp/Email and keep your community protected, even without internet."><meta name="keywords" content="religious safety, community alerts, offline, privacy, WhatsApp, map, emergency reporting"><link rel="canonical" href="https://danymumbere.github.io/safegather-alerts/"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0a7d6c"><meta property="og:type" content="website"><meta property="og:site_name" content="The Lamp's Mark"><meta property="og:title" content="SafeGather Alerts – Real‑time Religious Gathering Safety"><meta property="og:description" content="Mobile‑first, offline‑first app to instantly report and track safety incidents at religious gatherings. Share alerts via WhatsApp/Email and keep your community protected, even without internet."><meta property="og:url" content="https://danymumbere.github.io/safegather-alerts/"><meta property="og:image" content="https://danymumbere.github.io/safegather-alerts/og.svg"><meta property="og:image:alt" content="SafeGather Alerts – Real‑time Religious Gathering Safety"><meta property="og:locale" content="fr_FR"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="SafeGather Alerts – Real‑time Religious Gathering Safety"><meta name="twitter:description" content="Mobile‑first, offline‑first app to instantly report and track safety incidents at religious gatherings. Share alerts via WhatsApp/Email and keep your community protected, even without internet."><meta name="twitter:image" content="https://danymumbere.github.io/safegather-alerts/og.svg"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"SafeGather Alerts – Real‑time Religious Gathering Safety","description":"Mobile‑first, offline‑first app to instantly report and track safety incidents at religious gatherings. Share alerts via WhatsApp/Email and keep your community protected, even without internet.","url":"https://danymumbere.github.io/safegather-alerts/","applicationCategory":"LifestyleApplication","inLanguage":"fr","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"creator":{"@type":"Organization","name":"The Lamp's Mark","url":"https://thelampsmark.pages.dev/"}}</script><link rel="stylesheet" href="style.css"></head><body><section data-feature="offline-support" id="offline-support" class="offline-banner" style="display:none;" role="status" aria-live="polite">
+  Mode hors ligne actif. Vos signalements seront enregistrés et synchronisés dès le retour du réseau.
+</section>
 
-    <section id="home" data-feature="home-dashboard">
-        <h1>SafeGather Alerts</h1>
-        <div id="incident-count" aria-live="polite">0 incidents signalés dans votre zone</div>
-        <div id="mini-map" aria-label="Aperçu de la carte des incidents récents"></div>
-        <button id="emergency-quick-alert" data-feature="emergency-quick-alert" aria-label="Envoyer une alerte d’urgence immédiate">Alerte d’urgence</button>
-        <button onclick="showSection('report')">Signaler un incident</button>
-        <button onclick="showSection('map')">Voir la carte complète</button>
-    </section>
 
-    <section id="report" data-feature="incident-report-form" hidden>
-        <h2>Signaler un incident</h2>
-        <form id="incident-form">
-            <label for="location">Lieu de l’incident</label>
-            <input type="text" id="location" required aria-required="true" placeholder="Adresse ou coordonnées">
-            
-            <label for="incident-type">Type d’incident</label>
-            <select id="incident-type" required aria-required="true">
-                <option value="">Sélectionnez un type</option>
-                <option value="harassment">Harcèlement</option>
-                <option value="threat">Menace</option>
-                <option value="restriction">Restriction de mouvement</option>
-                <option value="other">Autre</option>
-            </select>
-            
-            <label for="description">Description détaillée</label>
-            <textarea id="description" placeholder="Décrivez brièvement ce qui s’est passé..."></textarea>
-            
-            <label for="photo">Photo (optionnel)</label>
-            <input type="file" id="photo" accept="image/*">
-            
-            <button type="submit">Soumettre le signalement</button>
-        </form>
-        <div id="report-progress" role="status" aria-live="polite"></div>
-    </section>
+  <h1>SafeGather Alerts</h1>
+  <nav aria-label="Navigation principale">
+    <button id="nav-home" class="nav-btn" onclick="App.navigateTo('home-dashboard')">Accueil</button>
+    <button id="nav-report" class="nav-btn" onclick="App.navigateTo('incident-report-form')">Signaler</button>
+    <button id="nav-map" class="nav-btn" onclick="App.navigateTo('real-time-map-view')">Carte</button>
+    <button id="nav-pending" class="nav-btn" onclick="App.navigateTo('pending-reports-queue')">En attente</button>
+    <button id="nav-settings" class="nav-btn" onclick="App.navigateTo('settings-and-privacy')">Réglages</button>
+    <button id="nav-about" class="nav-btn" onclick="App.navigateTo('about-and-help')">Aide</button>
+  </nav>
 
-    <section id="map" data-feature="real-time-map-view" hidden>
-        <h2>Carte des incidents</h2>
-        <div id="full-map" aria-label="Carte interactive des incidents signalés en temps réel"></div>
-        <div id="incident-details" hidden>
-            <p id="incident-time"></p>
-            <p id="incident-type"></p>
-            <button id="share-incident" data-feature="share-incident" aria-label="Partager cet incident via WhatsApp ou Email">Partager cet incident</button>
-            <button id="delete-incident" aria-label="Supprimer cet incident de la vue">Supprimer</button>
-            <input type="hidden" id="incident-id">
-        </div>
-    </section>
 
-    <section id="pending" data-feature="pending-reports-queue" hidden>
-        <h2>Signalements en attente</h2>
-        <table id="incident-table">
-            <thead>
-                <tr>
-                    <th scope="col">Statut</th>
-                    <th scope="col">Type</th>
-                    <th scope="col">Actions</th>
-                </tr>
-            </thead>
-            <tbody id="pending-list"></tbody>
-        </table>
-        <button onclick="syncReports()">Synchroniser maintenant</button>
-    </section>
-
-    <section id="settings" data-feature="settings-and-privacy" hidden>
-        <h2>Paramètres et confidentialité</h2>
-        <div class="setting-group">
-            <label for="toggle-notifications">Activer les notifications</label>
-            <input type="checkbox" id="toggle-notifications">
-        </div>
-        <div class="setting-group">
-            <label for="toggle-contrast">Mode haut contraste</label>
-            <input type="checkbox" id="toggle-contrast">
-        </div>
-        <button id="clear-storage">Effacer toutes les données locales</button>
-        
-        <div id="accessibility-settings" data-feature="accessibility">
-            <h3>Accessibilité</h3>
-            <label for="toggle-screen-reader">Optimisation lecteur d’écran</label>
-            <input type="checkbox" id="toggle-screen-reader">
-            <label for="toggle-keyboard-nav">Navigation clavier améliorée</label>
-            <input type="checkbox" id="toggle-keyboard-nav">
-        </div>
-    </section>
-
-    <section id="about" data-feature="about-and-help" hidden>
-        <h2>À propos de SafeGather</h2>
-        <p>SafeGather Alerts est un outil citoyen permettant de signaler en toute sécurité des incidents lors de rassemblements religieux.</p>
-        <h3>Fonctionnement hors ligne</h3>
-        <p>L’application enregistre vos signalements localement si vous n’avez pas de connexion. Ils seront envoyés dès que vous retrouverez un accès réseau.</p>
-        <h3>Confidentialité</h3>
-        <p>Aucune donnée personnelle n’est transmise. Vos signalements sont anonymes.</p>
-        <a href="mailto:support@safegather.org">Contactez le support</a>
-    </section>
-
-    <div id="offline-notice" data-feature="offline-support" role="alert" hidden>
-        ⚠️ Mode hors ligne : vous pouvez continuer à signaler, vos données seront synchronisées automatiquement une fois la connexion rétablie.
+<main class="app-main">
+  <!-- Home Dashboard -->
+  <section id="home-dashboard" data-feature="home-dashboard" class="view-section">
+    <div class="card summary-card">
+      <h2>Tableau de bord</h2>
+      <p>Nombre total d’incidents recensés : <strong id="totalCount">0</strong></p>
+      <div class="quick-actions">
+        <button id="reportBtn" class="btn primary">Signaler un incident</button>
+        <button id="mapBtn" class="btn secondary">Voir la carte complète</button>
+      </div>
     </div>
-</main><footer class="tlm"><p>Créé par <a href="https://thelampsmark.pages.dev/" target="_blank" rel="noopener">The Lamp's Mark</a></p><p>Cette application est gratuite. Pour la soutenir : mobile money Africell <strong>0906253050</strong></p><p><a href="https://wa.me/?text=SafeGather%20Alerts%20%E2%80%93%20Real%E2%80%91time%20Religious%20Gathering%20Safety%20https%3A%2F%2Fdanymumbere.github.io%2Fsafegather-alerts%2F" target="_blank" rel="noopener">Partager sur WhatsApp</a> · <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdanymumbere.github.io%2Fsafegather-alerts%2F" target="_blank" rel="noopener">Facebook</a> · <button type="button" id="tlm-share">Partager</button></p></footer><script>document.getElementById('tlm-share').onclick=()=>navigator.share?navigator.share({title:document.title,url:location.href}):navigator.clipboard.writeText(location.href).then(()=>alert('Lien copié'))</script><script type="module" src="js/app.js"></script></body></html>
+    <div class="card mini-map-card">
+      <h3>Aperçu récent</h3>
+      <div id="mini-map-preview" class="mini-map" aria-label="Mini-carte des incidents récents"></div>
+    </div>
+    <div class="card emergency-card">
+      <div data-feature="emergency-quick-alert">
+  <button id="emergency-quick-alert-btn" class="btn emergency" aria-label="Alerte d’urgence rapide">Alerte Urgence Communautaire</button>
+</div>
+    </div>
+  </section>
+
+  <!-- Incident Report Form -->
+  <section id="incident-report-form" data-feature="incident-report-form" class="view-section" style="display:none;">
+    <h2>Signaler un incident</h2>
+    <form id="incident-form" novalidate>
+      <div class="form-group">
+        <label for="incident-type">Type d’incident *</label>
+        <select id="incident-type" required>
+          <option value="">Sélectionnez...</option>
+          <option value="harassment">Harcèlement</option>
+          <option value="threat">Menace</option>
+          <option value="restriction">Restriction</option>
+          <option value="other">Autre</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="incident-location">Lieu ou adresse *</label>
+        <input type="text" id="incident-location" required placeholder="Ex. 12 rue de la Paix, Paris" />
+        <button type="button" id="pick-location-btn" class="btn small">Utiliser ma position</button>
+      </div>
+      <div class="form-group">
+        <label for="incident-description">Description optionnelle</label>
+        <textarea id="incident-description" rows="4" placeholder="Détails de l’incident..."></textarea>
+      </div>
+      <div class="form-group">
+        <label for="incident-photo">Photo optionnelle</label>
+        <input type="file" id="incident-photo" accept="image/*" />
+      </div>
+      <button type="submit" class="btn primary">Soumettre le signalement</button>
+    </form>
+  </section>
+
+  <!-- Real-time Map View -->
+  <section id="real-time-map-view" data-feature="real-time-map-view" class="view-section" style="display:none;">
+    <h2>Carte en temps réel</h2>
+    <div id="full-map" class="full-map" aria-label="Carte interactive des signalements"></div>
+    <div id="marker-detail" class="marker-detail-card" style="display:none;" aria-live="polite">
+      <button id="close-detail-btn" class="close-btn" aria-label="Fermer les détails">×</button>
+      <div id="marker-detail-content"></div>
+      <div data-feature="share-incident">
+  <button id="share-incident-btn" class="btn secondary">Partager</button>
+</div>
+    </div>
+  </section>
+
+  <!-- Pending Reports Queue -->
+  <section id="pending-reports-queue" data-feature="pending-reports-queue" class="view-section" style="display:none;">
+    <h2>Signalements en attente de synchronisation</h2>
+    <div id="pending-list" class="pending-list">
+      <p>Aucun signalement en attente.</p>
+    </div>
+    <button id="sync-now-btn" class="btn primary">Synchroniser maintenant</button>
+  </section>
+
+  <!-- Settings & Privacy -->
+  <section id="settings-and-privacy" data-feature="settings-and-privacy" class="view-section" style="display:none;">
+    <h2>Réglages et Confidentialité</h2>
+    <div class="form-group">
+      <label>
+        <input type="checkbox" id="toggle-notifications" /> Activer les notifications d’alerte
+      </label>
+    </div>
+    <div class="form-group">
+      <label for="default-share-app">Application de partage favorite</label>
+      <select id="default-share-app">
+        <option value="whatsapp">WhatsApp</option>
+        <option value="email">Email</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <button id="clear-local-data-btn" class="btn danger">Effacer les données locales</button>
+    </div>
+    <section data-feature="accessibility" class="form-group">
+      <label>
+        <input type="checkbox" id="toggle-high-contrast" /> Activer le mode contraste élevé
+      </label>
+    </section>
+  </section>
+
+  <!-- About & Help -->
+  <section id="about-and-help" data-feature="about-and-help" class="view-section" style="display:none;">
+    <h2>À propos et Aide</h2>
+    <p>SafeGather Alerts permet de signaler en toute sécurité les incidents et restrictions lors de rassemblements religieux.</p>
+    <h3>Fonctionnement hors ligne</h3>
+    <p>L’application fonctionne entièrement hors ligne en stockant vos données localement jusqu’à la reconnexion.</p>
+    <h3>Politique de confidentialité</h3>
+    <p>Aucun identifiant personnel n’est collecté ni transmis. Vos signalements restent strictement anonymes.</p>
+  </section>
+</main>
+<footer class="tlm"><p>Créé par <a href="https://thelampsmark.pages.dev/" target="_blank" rel="noopener">The Lamp's Mark</a></p><p>Cette application est gratuite. Pour la soutenir : mobile money Africell <strong>0906253050</strong></p><p><a href="https://wa.me/?text=SafeGather%20Alerts%20%E2%80%93%20Real%E2%80%91time%20Religious%20Gathering%20Safety%20https%3A%2F%2Fdanymumbere.github.io%2Fsafegather-alerts%2F" target="_blank" rel="noopener">Partager sur WhatsApp</a> · <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdanymumbere.github.io%2Fsafegather-alerts%2F" target="_blank" rel="noopener">Facebook</a> · <button type="button" id="tlm-share">Partager</button></p></footer><script>document.getElementById('tlm-share').onclick=()=>navigator.share?navigator.share({title:document.title,url:location.href}):navigator.clipboard.writeText(location.href).then(()=>alert('Lien copié'))</script><script type="module" src="js/app.js"></script></body></html>
