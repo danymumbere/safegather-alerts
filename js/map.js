@@ -2,7 +2,7 @@
 import { incidentGeoJSON } from './data.js';
 import { getIncidents } from './offline.js';
 import L from 'https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.esm.js'; // Assurez-vous d'avoir Leaflet inclus dans votre projet
-import 'leaflet.markercluster'; // Assurez-vous d'avoir Leaflet.markercluster inclus
+import 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js';
 
 // Sélecteurs HTML valides basés sur les IDs fournis
 const MINI_MAP_SELECTOR = '#mini-map';

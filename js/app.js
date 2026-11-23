@@ -66,16 +66,21 @@ window.App = {
 
   // Configuration des écouteurs globaux
   setupEventListeners() {
-    const reportBtn = document.getElementById('reportBtn');
-    const mapBtn = document.getElementById('mapBtn');
+    // Navigation principale
+    const navHome = document.getElementById('nav-home');
+    const navMap = document.getElementById('nav-map');
+    const navReport = document.getElementById('nav-report');
     const closeDetailBtn = document.getElementById('close-detail-btn');
 
-    if (reportBtn) {
-      reportBtn.addEventListener('click', () => this.navigateTo('incident-report-form'));
-    }
+    if (navHome) navHome.addEventListener('click', () => this.navigateTo('home-dashboard'));
+    if (navMap) navMap.addEventListener('click', () => this.navigateTo('real-time-map-view'));
+    if (navReport) navReport.addEventListener('click', () => this.navigateTo('incident-report-form'));
 
-    if (mapBtn) {
-      mapBtn.addEventListener('click', () => this.navigateTo('real-time-map-view'));
+    if (closeDetailBtn) {
+      closeDetailBtn.addEventListener('click', () => {
+        const detail = document.getElementById('marker-detail');
+        if (detail) detail.style.display = 'none';
+      });
     }
 
     if (closeDetailBtn) {
