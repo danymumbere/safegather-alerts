@@ -1,6 +1,6 @@
 // js/settings.js
 import { showToast } from './ui.js';
-import { deletePendingReport } from './pending.js';
+import { deletePendingReport, clearPendingReports } from './pending.js';
 
 // Sélecteurs HTML valides basés sur les IDs fournis
 const NOTIFICATIONS_TOGGLE = '#notifications-toggle';

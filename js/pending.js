@@ -84,3 +84,16 @@ export async function deletePendingReport(incidentId) {
     console.error(err);
   }
 }
+
+export async function clearPendingReports() {
+  try {
+    const incidents = await getIncidents();
+    for (const incident of incidents) {
+      await deleteIncident(incident.id);
+    }
+    showPendingReports();
+  } catch (err) {
+    console.error('Erreur lors de la suppression de tous les incidents:', err);
+    throw err;
+  }
+}

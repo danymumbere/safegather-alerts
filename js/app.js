@@ -11,12 +11,17 @@ const SECTIONS = ['home-dashboard', 'incident-report-form', 'real-time-map-view'
 
 window.App = {
   init() {
-    this.ensureDOMStructure();
-    this.setupEventListeners();
-    this.initializeModules();
-    this.updateDashboardStats();
-    this.handleOfflineStatus();
-    this.navigateTo('home-dashboard');
+    try {
+      this.ensureDOMStructure();
+      this.setupEventListeners();
+      this.initializeModules();
+      this.updateDashboardStats();
+      this.handleOfflineStatus();
+      this.navigateTo('home-dashboard');
+      console.log('App initialized successfully');
+    } catch (e) {
+      console.error('App initialization failed:', e);
+    }
   },
 
   ensureDOMStructure() {
@@ -119,7 +124,12 @@ window.App = {
     <h2>Réglages et Confidentialité</h2>
     <div class="form-group">
       <label>
-        <input type="checkbox" id="toggle-notifications" /> Activer les notifications d’alerte
+        <input type="checkbox" id="notifications-toggle" /> Activer les notifications d’alerte
+      </label>
+    </div>
+    <div class="form-group">
+      <label>
+        <input type="checkbox" id="contrast-toggle" /> Activer le mode haut contraste
       </label>
     </div>
     <div class="form-group">
@@ -174,6 +184,8 @@ window.App = {
         const section = sectionMap[target.id];
         if (section) this.navigateTo(section);
       }
+      if (target.id === 'reportBtn') this.navigateTo('incident-report-form');
+      if (target.id === 'mapBtn') this.navigateTo('real-time-map-view');
       if (target.id === 'close-detail-btn') {
         const d = document.getElementById('marker-detail');
         if (d) d.style.display = 'none';
