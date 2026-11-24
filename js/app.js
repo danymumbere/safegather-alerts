@@ -13,41 +13,61 @@ window.App = {
   init() {
     this.ensureDOMStructure();
     this.setupEventListeners();
-  },
-
-  ensureDOMStructure() {
-    if (document.body.innerHTML.trim() === '') {
-      document.body.innerHTML = `
-        <section id="offline-support" style="display:none;">Mode hors ligne actif.</section>
-        <header>
-          <h1>SafeGather Alerts</h1>
-          <nav>
-            <button id="nav-home">Accueil</button>
-            <button id="nav-report">Signaler</button>
-            <button id="nav-map">Carte</button>
-            <button id="nav-pending">En attente</button>
-            <button id="nav-settings">Réglages</button>
-            <button id="nav-about">Aide</button>
-          </nav>
-        </header>
-        <main>
-          <section id="home-dashboard"><h2>Tableau de bord</h2><p>Total: <span id="totalCount">0</span></p></section>
-          <section id="incident-report-form" style="display:none;"><h2>Signaler</h2></section>
-          <section id="real-time-map-view" style="display:none;"><h2>Carte</h2><div id="full-map"></div><div id="marker-detail" style="display:none;"><button id="close-detail-btn">Fermer</button><div id="marker-detail-content"></div><button id="share-incident-btn">Partager</button></div></section>
-          <section id="pending-reports-queue" style="display:none;"><h2>En attente</h2><div id="pending-list"></div></section>
-          <section id="settings-and-privacy" style="display:none;"><h2>Réglages</h2></section>
-          <section id="about-and-help" style="display:none;"><h2>Aide</h2></section>
-        </main>
-      `;
-    }
-  },
-
-  setupEventListeners() {
     this.initializeModules();
     this.updateDashboardStats();
     this.handleOfflineStatus();
     this.navigateTo('home-dashboard');
   },
+
+  ensureDOMStructure() {
+    if (document.body.innerHTML.trim() === '') {
+      const html = `
+<section data-feature="offline-support" id="offline-support" class="offline-banner" style="display:none;" role="status" aria-live="polite">
+  Mode hors ligne actif.
+</section>
+<header class="app-header">
+  <h1>SafeGather Alerts</h1>
+  <nav aria-label="Navigation principale">
+    <button id="nav-home" class="nav-btn">Accueil</button>
+    <button id="nav-report" class="nav-btn">Signaler</button>
+    <button id="nav-map" class="nav-btn">Carte</button>
+    <button id="nav-pending" class="nav-btn">En attente</button>
+    <button id="nav-settings" class="nav-btn">Réglages</button>
+    <button id="nav-about" class="nav-btn">Aide</button>
+  </nav>
+</header>
+<main class="app-main">
+  <section id="home-dashboard" data-feature="home-dashboard" class="view-section">
+    <h2>Tableau de bord</h2>
+    <p>Total: <strong id="totalCount">0</strong></p>
+    <button id="reportBtn">Signaler</button>
+    <button id="mapBtn">Carte</button>
+    <button id="emergency-quick-alert-btn">Alerte</button>
+  </section>
+  <section id="incident-report-form" data-feature="incident-report-form" class="view-section" style="display:none;">
+    <h2>Signaler</h2>
+    <form id="incident-form"><input type="text" id="incident-location"><button type="submit">Envoyer</button></form>
+  </section>
+  <section id="real-time-map-view" data-feature="real-time-map-view" class="view-section" style="display:none;">
+    <h2>Carte</h2>
+    <div id="full-map"></div>
+    <div id="marker-detail" style="display:none;"><button id="close-detail-btn">Fermer</button><div id="marker-detail-content"></div><button id="share-incident-btn">Partager</button></div>
+  </section>
+  <section id="pending-reports-queue" data-feature="pending-reports-queue" class="view-section" style="display:none;">
+    <h2>En attente</h2>
+    <div id="pending-list"></div>
+  </section>
+  <section id="settings-and-privacy" data-feature="settings-and-privacy" class="view-section" style="display:none;">
+    <h2>Réglages</h2>
+  </section>
+  <section id="about-and-help" data-feature="about-and-help" class="view-section" style="display:none;">
+    <h2>Aide</h2>
+  </section>
+</main>`;
+      document.body.innerHTML = html;
+    }
+  },
+
   navigateTo(sectionId) {
     SECTIONS.forEach(id => {
       const el = document.getElementById(id);
@@ -55,6 +75,7 @@ window.App = {
     });
     if (sectionId === 'real-time-map-view') initFullMap();
   },
+
   initializeModules() {
     try {
       initIndexedDB();
@@ -66,6 +87,7 @@ window.App = {
       emergencyQuickAlert();
     } catch (e) { console.error('Init error:', e); }
   },
+
   setupEventListeners() {
     const navs = { 'nav-home': 'home-dashboard', 'nav-map': 'real-time-map-view', 'nav-report': 'incident-report-form', 'nav-pending': 'pending-reports-queue', 'nav-settings': 'settings-and-privacy', 'nav-about': 'about-and-help' };
     Object.entries(navs).forEach(([id, section]) => {
@@ -75,10 +97,12 @@ window.App = {
     const closeBtn = document.getElementById('close-detail-btn');
     if (closeBtn) closeBtn.addEventListener('click', () => { const d = document.getElementById('marker-detail'); if (d) d.style.display = 'none'; });
   },
+
   updateDashboardStats() {
     const el = document.getElementById('totalCount');
     if (el && incidentGeoJSON.features) el.textContent = incidentGeoJSON.features.length;
   },
+
   handleOfflineStatus() {
     const banner = document.getElementById('offline-support');
     const update = () => { if (banner) banner.style.display = navigator.onLine ? 'none' : 'block'; };
@@ -87,4 +111,5 @@ window.App = {
     update();
   }
 };
+
 window.addEventListener('load', () => window.App.init());
