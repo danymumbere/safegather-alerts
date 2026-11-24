@@ -23,7 +23,7 @@ window.App = {
     if (!document.getElementById('home-dashboard')) {
       const wrapper = document.createElement('div');
       wrapper.innerHTML = `
-<section data-feature="offline-support" id="offline-support" class="offline-banner" style="display:none;" role="status" aria-live="polite">
+<section data-feature="offline-support" id="offline-support" class="offline-banner" role="status" aria-live="polite">
   Mode hors ligne actif.
 </section>
 <header class="app-header">
@@ -53,7 +53,7 @@ window.App = {
   <section id="real-time-map-view" data-feature="real-time-map-view" class="view-section" style="display:none;">
     <h2>Carte</h2>
     <div id="full-map"></div>
-    <div id="marker-detail" style="display:none;"><button id="close-detail-btn">Fermer</button><div id="marker-detail-content"></div><div id="share-incident"><button id="share-incident-btn">Partager</button></div></div>
+    <div id="marker-detail"><button id="close-detail-btn">Fermer</button><div id="marker-detail-content"></div><div id="share-incident" data-feature="share-incident"><button id="share-incident-btn">Partager</button></div></div>
   </section>
   <section id="pending-reports-queue" data-feature="pending-reports-queue" class="view-section" style="display:none;">
     <h2>En attente</h2>
