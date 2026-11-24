@@ -4,11 +4,11 @@ import { showToast } from './ui.js';
 import { shareViaWhatsApp } from './share.js';
 
 // Sélecteurs HTML valides basés sur les IDs fournis
-const REPORT_FORM_SELECTOR = '#incident-report-form';
-const LOCATION_INPUT_SELECTOR = '#location';
+const REPORT_FORM_SELECTOR = '#incident-form';
+const LOCATION_INPUT_SELECTOR = '#incident-location';
 const TYPE_SELECTOR = '#incident-type';
-const DESCRIPTION_SELECTOR = '#description';
-const PHOTO_INPUT_SELECTOR = '#photo';
+const DESCRIPTION_SELECTOR = '#incident-description';
+const PHOTO_INPUT_SELECTOR = '#incident-photo';
 const SUBMIT_BTN_SELECTOR = '#submit-report';
 const PENDING_QUEUE_SELECTOR = '#pending-reports-queue';
 
@@ -40,29 +40,31 @@ export async function handleReportSubmit(event) {
   event.preventDefault();
 
   const form = event.target;
-  const formData = new FormData(form);
+  const location = document.getElementById('incident-location').value.trim();
+  const incidentType = document.getElementById('incident-type').value;
+  const description = document.getElementById('incident-description').value.trim();
+  const photoInput = document.getElementById('incident-photo');
 
   // Validation des champs requis
-  if (!formData.get('location') || !formData.get('incident-type')) {
-    showNotification('Veuillez remplir tous les champs obligatoires.');
+  if (!location || !incidentType) {
+    showToast('Veuillez remplir tous les champs obligatoires.');
     return;
   }
 
   const incident = {
     time: new Date().toISOString(),
-    location: formData.get('location'),
-    incidentType: formData.get('incident-type'),
-    description: formData.get('description') || null,
-    photoUrl: formData.get('photo') ? URL.createObjectURL(formData.get('photo')) : null,
+    location,
+    incidentType,
+    description: description || null,
+    photoUrl: photoInput && photoInput.files[0] ? URL.createObjectURL(photoInput.files[0]) : null,
   };
 
   try {
     await saveIncident(incident);
-    showNotification('Signalement enregistré avec succès.');
+    showToast('Signalement enregistré avec succès.');
     form.reset();
-    refreshPendingQueue();
   } catch (error) {
-    showNotification('Erreur lors de l’enregistrement. Réessayez.');
+    showToast('Erreur lors de l’enregistrement. Réessayez.');
     console.error('handleReportSubmit error:', error);
   }
 }
