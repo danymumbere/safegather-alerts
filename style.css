@@ -159,6 +159,10 @@ button:focus-visible,
   padding: 0;
 }
 
+#full-map { height: 400px; width: 100%; }
+#mini-map-preview { height: 200px; width: 100%; margin-bottom: 10px; }
+.view-section { padding: 1rem; }
+
 /* Mini‑carte et carte pleine taille */
 #mini-map-preview,
 #full-map-container {

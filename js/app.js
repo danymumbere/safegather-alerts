@@ -20,8 +20,9 @@ window.App = {
   },
 
   ensureDOMStructure() {
-    if (document.body.innerHTML.trim() === '') {
-      const html = `
+    if (!document.getElementById('home-dashboard')) {
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = `
 <section data-feature="offline-support" id="offline-support" class="offline-banner" style="display:none;" role="status" aria-live="polite">
   Mode hors ligne actif.
 </section>
@@ -40,6 +41,7 @@ window.App = {
   <section id="home-dashboard" data-feature="home-dashboard" class="view-section">
     <h2>Tableau de bord</h2>
     <p>Total: <strong id="totalCount">0</strong></p>
+    <div id="mini-map-preview" style="height: 200px; background: #eee;"></div>
     <button id="reportBtn">Signaler</button>
     <button id="mapBtn">Carte</button>
     <button id="emergency-quick-alert-btn">Alerte</button>
@@ -51,7 +53,7 @@ window.App = {
   <section id="real-time-map-view" data-feature="real-time-map-view" class="view-section" style="display:none;">
     <h2>Carte</h2>
     <div id="full-map"></div>
-    <div id="marker-detail" style="display:none;"><button id="close-detail-btn">Fermer</button><div id="marker-detail-content"></div><button id="share-incident-btn">Partager</button></div>
+    <div id="marker-detail" style="display:none;"><button id="close-detail-btn">Fermer</button><div id="marker-detail-content"></div><div id="share-incident"><button id="share-incident-btn">Partager</button></div></div>
   </section>
   <section id="pending-reports-queue" data-feature="pending-reports-queue" class="view-section" style="display:none;">
     <h2>En attente</h2>
@@ -64,7 +66,9 @@ window.App = {
     <h2>Aide</h2>
   </section>
 </main>`;
-      document.body.innerHTML = html;
+      while (wrapper.firstChild) {
+        document.body.appendChild(wrapper.firstChild);
+      }
     }
   },
 
@@ -89,13 +93,18 @@ window.App = {
   },
 
   setupEventListeners() {
-    const navs = { 'nav-home': 'home-dashboard', 'nav-map': 'real-time-map-view', 'nav-report': 'incident-report-form', 'nav-pending': 'pending-reports-queue', 'nav-settings': 'settings-and-privacy', 'nav-about': 'about-and-help' };
-    Object.entries(navs).forEach(([id, section]) => {
-      const el = document.getElementById(id);
-      if (el) el.addEventListener('click', () => this.navigateTo(section));
+    document.body.addEventListener('click', (e) => {
+      const target = e.target;
+      if (target.id && target.id.startsWith('nav-')) {
+        const sectionMap = { 'nav-home': 'home-dashboard', 'nav-map': 'real-time-map-view', 'nav-report': 'incident-report-form', 'nav-pending': 'pending-reports-queue', 'nav-settings': 'settings-and-privacy', 'nav-about': 'about-and-help' };
+        const section = sectionMap[target.id];
+        if (section) this.navigateTo(section);
+      }
+      if (target.id === 'close-detail-btn') {
+        const d = document.getElementById('marker-detail');
+        if (d) d.style.display = 'none';
+      }
     });
-    const closeBtn = document.getElementById('close-detail-btn');
-    if (closeBtn) closeBtn.addEventListener('click', () => { const d = document.getElementById('marker-detail'); if (d) d.style.display = 'none'; });
   },
 
   updateDashboardStats() {
@@ -112,4 +121,9 @@ window.App = {
   }
 };
 
-window.addEventListener('load', () => window.App.init());
+if (document.readyState === 'loading') {
+  window.addEventListener('load', () => window.App.init());
+} else {
+  window.App.init();
+}
+console.log('App script loaded and init called');

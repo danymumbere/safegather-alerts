@@ -10,13 +10,8 @@ let leafletLoading = false;
 const SELECTORS = {
   miniMap: '#mini-map-preview',
   fullMap: '#full-map',
-  detail: '#incident-detail',
-  title: '#detail-title',
-  time: '#detail-time',
-  type: '#detail-type',
-  description: '#detail-description',
-  photo: '#detail-photo',
-  shareBtn: '#share-incident-btn',
+  detail: '#marker-detail',
+  content: '#marker-detail-content',
   closeBtn: '#close-detail-btn'
 };
 
@@ -91,11 +86,12 @@ function refreshMiniMap() {
 
 function showIncidentDetail(props) {
   const el = document.querySelector(SELECTORS.detail);
-  if (!el) return;
+  const content = document.querySelector(SELECTORS.content);
+  if (!el || !content) return;
   el.style.display = 'block';
-  document.querySelector(SELECTORS.title).textContent = props.incidentType;
-  document.querySelector(SELECTORS.time).textContent = new Date(props.time).toLocaleString();
-  document.querySelector(SELECTORS.type).textContent = props.incidentType;
-  document.querySelector(SELECTORS.description).textContent = props.description || '';
-  document.querySelector(SELECTORS.closeBtn).onclick = () => el.style.display = 'none';
+  content.innerHTML = `
+    <p><strong>Type:</strong> ${props.type}</p>
+    <p><strong>Date:</strong> ${props.date}</p>
+    <p><strong>Description:</strong> ${props.description}</p>
+  `;
 }
