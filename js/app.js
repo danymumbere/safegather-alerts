@@ -1,27 +1,14 @@
 import { incidentGeoJSON } from './data.js';
 import { initIndexedDB } from './offline.js';
 import { initMiniMap, initFullMap } from './map.js';
-import { showReportForm, handleReportSubmit } from './report.js';
-import { shareViaWhatsApp, shareViaEmail } from './share.js';
-import { showToast } from './ui.js';
-import { showPendingReports, deletePendingReport } from './pending.js';
+import { showReportForm } from './report.js';
+import { showPendingReports } from './pending.js';
 import { initSettings } from './settings.js';
 import { showAboutPage } from './about.js';
 import { emergencyQuickAlert } from './emergency-quick-alert.js';
 
-// Liste des sections principales pour la navigation
-const SECTIONS = [
-  'home-dashboard',
-  'incident-report-form',
-  'real-time-map-view',
-  'pending-reports-queue',
-  'settings-and-privacy',
-  'about-and-help'
-];
+const SECTIONS = ['home-dashboard', 'incident-report-form', 'real-time-map-view', 'pending-reports-queue', 'settings-and-privacy', 'about-and-help'];
 
-/**
- * Orchestrateur principal de l’application
- */
 window.App = {
   init() {
     this.setupEventListeners();
@@ -30,23 +17,13 @@ window.App = {
     this.handleOfflineStatus();
     this.navigateTo('home-dashboard');
   },
-
-  // Navigation entre les sections
   navigateTo(sectionId) {
     SECTIONS.forEach(id => {
       const el = document.getElementById(id);
-      if (el) {
-        el.style.display = (id === sectionId) ? 'block' : 'none';
-      }
+      if (el) el.style.display = (id === sectionId) ? 'block' : 'none';
     });
-
-    // Initialisation spécifique lors de l’accès à la carte
-    if (sectionId === 'real-time-map-view') {
-      initFullMap();
-    }
+    if (sectionId === 'real-time-map-view') initFullMap();
   },
-
-  // Initialisation des modules importés
   initializeModules() {
     try {
       initIndexedDB();
@@ -56,80 +33,27 @@ window.App = {
       initSettings();
       showAboutPage();
       emergencyQuickAlert();
-    } catch (error) {
-      console.error('Erreur lors de l’initialisation des modules :', error);
-      showToast('Erreur lors du chargement de l’application');
-    }
+    } catch (e) { console.error('Init error:', e); }
   },
-
-  // Configuration des écouteurs globaux
   setupEventListeners() {
-    // Navigation principale
-    const navHome = document.getElementById('nav-home');
-    const navMap = document.getElementById('nav-map');
-    const navReport = document.getElementById('nav-report');
-    const navPending = document.getElementById('nav-pending');
-    const navSettings = document.getElementById('nav-settings');
-    const navAbout = document.getElementById('nav-about');
-    const closeDetailBtn = document.getElementById('close-detail-btn');
-
-    if (navHome) navHome.addEventListener('click', () => this.navigateTo('home-dashboard'));
-    if (navMap) navMap.addEventListener('click', () => this.navigateTo('real-time-map-view'));
-    if (navReport) navReport.addEventListener('click', () => this.navigateTo('incident-report-form'));
-    if (navPending) navPending.addEventListener('click', () => this.navigateTo('pending-reports-queue'));
-    if (navSettings) navSettings.addEventListener('click', () => this.navigateTo('settings-and-privacy'));
-    if (navAbout) navAbout.addEventListener('click', () => this.navigateTo('about-and-help'));
-
-    if (closeDetailBtn) {
-      closeDetailBtn.addEventListener('click', () => {
-        const detail = document.getElementById('marker-detail');
-        if (detail) detail.style.display = 'none';
-      });
-    }
-
-    if (closeDetailBtn) {
-      closeDetailBtn.addEventListener('click', () => {
-        const detail = document.getElementById('marker-detail');
-        if (detail) detail.style.display = 'none';
-      });
-    }
+    const navs = { 'nav-home': 'home-dashboard', 'nav-map': 'real-time-map-view', 'nav-report': 'incident-report-form', 'nav-pending': 'pending-reports-queue', 'nav-settings': 'settings-and-privacy', 'nav-about': 'about-and-help' };
+    Object.entries(navs).forEach(([id, section]) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('click', () => this.navigateTo(section));
+    });
+    const closeBtn = document.getElementById('close-detail-btn');
+    if (closeBtn) closeBtn.addEventListener('click', () => { const d = document.getElementById('marker-detail'); if (d) d.style.display = 'none'; });
   },
-
-  // Mise à jour des statistiques sur le dashboard
   updateDashboardStats() {
-    const totalCountEl = document.getElementById('totalCount');
-    if (totalCountEl && incidentGeoJSON.features) {
-      totalCountEl.textContent = `${incidentGeoJSON.features.length}`;
-    }
+    const el = document.getElementById('totalCount');
+    if (el && incidentGeoJSON.features) el.textContent = incidentGeoJSON.features.length;
   },
-
-  // Gestion de l’état hors ligne
   handleOfflineStatus() {
-    const offlineBanner = document.getElementById('offline-support');
-    const updateStatus = () => {
-      if (offlineBanner) {
-        offlineBanner.style.display = navigator.onLine ? 'none' : 'block';
-      }
-    };
-
-    window.addEventListener('online', updateStatus);
-    window.addEventListener('offline', updateStatus);
-    updateStatus();
-  },
-
-  // Enregistrement du Service Worker
-  registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(() => console.log('Service Worker enregistré avec succès.'))
-          .catch(err => console.error('Échec de l’enregistrement du Service Worker :', err));
-      });
-    }
+    const banner = document.getElementById('offline-support');
+    const update = () => { if (banner) banner.style.display = navigator.onLine ? 'none' : 'block'; };
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
+    update();
   }
 };
-
-// Lancement de l’application
-document.addEventListener('DOMContentLoaded', () => {
-  window.App.init();
-});
+window.addEventListener('load', () => window.App.init());
